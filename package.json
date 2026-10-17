@@ -2,7 +2,7 @@
   "name": "sme-decision-intelligence",
   "version": "0.1.0",
   "private": true,
-  "description": "SME AI Decision Intelligence System: verified analytics, grounded AI explanations, scenarios and human-approved workflow actions for a fictional Pakistani tile business.",
+  "description": "SME AI Decision Intelligence System: verified analytics, grounded AI explanations, scenarios and human-approved workflow actions for manufacturers and distributors, with SAP and CSV data onboarding.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

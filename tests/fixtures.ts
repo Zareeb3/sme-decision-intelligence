@@ -36,6 +36,7 @@ export function tinyBundle(): DataBundle {
       // unpaid, not yet due at 31 Mar
       { invoice_id: "I4", order_id: "O4", customer_id: "C1", invoice_date: "2026-03-05", due_date: "2026-05-04", invoice_amount_pkr: 38_000, amount_paid_pkr: 0, payment_date: "", status: "Open" },
     ],
+    payments: [],
     targets: ["2026-01", "2026-02", "2026-03"].flatMap((month) => [
       { month, region: "South", sales_target_pkr: 50_000, collection_target_pkr: 40_000 },
       { month, region: "North", sales_target_pkr: 60_000, collection_target_pkr: 30_000 },

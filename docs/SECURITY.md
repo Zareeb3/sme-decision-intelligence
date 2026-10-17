@@ -1,31 +1,29 @@
 # Security and privacy
 
-This is a portfolio and demonstration application. The controls below are implemented; the gaps are listed so nobody mistakes it for a production system.
+What is implemented, what is configurable, and what a company should add before a wide rollout.
 
 ## Implemented
 
 | Area | Control |
 |---|---|
-| **Secrets** | `ANTHROPIC_API_KEY` and `N8N_WEBHOOK_SECRET` are read only in server code (`src/lib/ai/anthropic.ts`, `src/app/api/actions/route.ts`). They are never sent to the browser; `/api/status` returns booleans and the model name only. `.env*` files are git-ignored; `.env.example` contains no values. |
-| **Data minimisation** | CSV uploads are parsed and analysed in the browser. Only the evidence packet (labels and aggregated numbers, plus at most a handful of customer names) is sent to `/api/ask`, and from there to the AI provider. Raw rows never leave the browser. |
-| **Input validation** | Every CSV row is validated with Zod. `/api/ask` validates the evidence packet against a schema and rejects bodies over 60 KB; questions are capped at 500 characters. `/api/actions` validates the action and the approval. |
-| **Output validation** | The model's answer must match a JSON schema (forced tool call) and is validated again with Zod before use; numbers are grounding-checked. |
-| **Prompt injection** | Uploaded data can contain text (e.g. a customer name). The system prompt states that the evidence is data, not instructions; the model can only return the fixed answer structure; it has no tools that act on the world. |
-| **Human approval** | `/api/actions` refuses any request without `approved: true` and a named approver. The UI also requires ticking "I have reviewed the payload". |
-| **SSRF prevention** | The n8n destination comes only from the server's `N8N_WEBHOOK_URL`; the request cannot choose where data is sent. |
-| **Abuse limits** | Per-IP fixed-window rate limits on `/api/ask` (20/min) and `/api/actions` (30/min). |
+| **Secrets** | `ANTHROPIC_API_KEY`, `INGEST_TOKEN`, `BASIC_AUTH_PASSWORD` and `N8N_WEBHOOK_SECRET` are read only in server code and never sent to the browser. `/api/status` and Settings show booleans only. `.env*` files and `pipeline/config.json` are git-ignored. |
+| **Sign-in** | When `BASIC_AUTH_USER`/`BASIC_AUTH_PASSWORD` are set, middleware requires them for every page and API except `/api/ingest` (which has its own token). Comparison is constant-time. Use HTTPS. |
+| **Pipeline access** | `/api/ingest/*` requires `Authorization: Bearer <INGEST_TOKEN>` (constant-time comparison), is rate-limited, size-limited (100 MB) and returns 503 when no token is configured. |
+| **Data at rest** | Self-hosted: datasets are CSV files in `DATA_DIR` on the company's own server; protect the folder with OS permissions and back it up. Vercel/browser mode: uploads stay in the user's browser (IndexedDB) and are never sent to the server. |
+| **Safe replacement** | Every upload and ingest is validated first; invalid files never replace current data. The previous version of each dataset is kept and can be restored; writes are atomic. Each load records who (name or pipeline) and when. |
+| **Data sent to the AI provider** | Only the evidence packet for one question: labels and aggregated numbers, never raw rows. With **"Replace customer names before sending to AI"** (on by default for company data), customer names are replaced by "Account A", "Account B" … before leaving the browser and restored in the answer locally. Without an API key nothing is sent anywhere (demo mode). |
+| **Input validation** | Zod schemas for every dataset row, settings, evidence packets, actions and approvals. Upload size limits (50 MB browser, 100 MB ingest); question length 500 characters; packet size 60 KB. |
+| **Output validation** | The model must answer through a fixed JSON schema (forced tool call), revalidated with Zod; every number is checked against the evidence and unverified numbers are flagged to the user. |
+| **Prompt injection** | Data can contain text (e.g. a customer name). The system prompt treats evidence as data; the model has no tools that act on the world; output is structured. |
+| **Human approval** | `/api/actions` refuses requests without `approved: true` and a named approver; the UI requires reviewing the payload. The n8n destination comes only from server configuration (no SSRF). |
 | **Headers** | `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `X-Frame-Options: DENY`; `X-Powered-By` removed. |
-| **Honest labelling** | Demo mode, provider failures and unverified numbers are always shown to the user. |
+| **Honest labelling** | Sample data, demo mode, provider failures and unverified numbers are always shown as such. |
 
-## Not implemented (needed before real business use)
+## Recommended before a company-wide rollout
 
-- **Authentication and authorisation.** Anyone with the URL can use the app and, if configured, spend the API budget.
-- **Durable rate limiting.** The limiter is in memory per server instance; use a shared store (e.g. Redis/Upstash) in production.
-- **Audit log.** Approvals are forwarded to n8n but not stored by the app.
-- **Server-side recomputation of evidence.** The server trusts the evidence packet the browser computed. With server-held data, the server should build the packet itself.
+- **Single sign-on and roles.** Basic authentication is one shared login. For more than a small team, put the app behind the company identity provider (Azure AD / Entra ID application proxy, Okta, oauth2-proxy) and decide who may load data versus view it (`ALLOW_UI_UPLOADS=false` makes it pipeline-only).
+- **Durable rate limiting and audit log.** Limits are in memory per instance; approvals are forwarded to n8n but not stored by the app. The dataset manifest records loads only.
+- **Server-side evidence.** The server trusts the evidence packet computed in the browser. With server-held data, the server could build it itself.
 - **Content Security Policy.** Not configured yet.
-- **Data retention agreements** with the AI provider and n8n host for real customer data.
-
-## Using real company data
-
-Do not upload real employer or customer data to a public deployment. For a private pilot: deploy behind authentication, review the AI provider's data-usage terms, prefer aggregated exports, and remove personal data that analysis does not need.
+- **AI provider terms.** Review the provider's data-retention and training terms with the company's legal/IT team before enabling live mode, even with name replacement on.
+- **Penetration test.** Not performed. No claim of production-grade security is made.

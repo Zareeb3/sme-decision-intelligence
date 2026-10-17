@@ -13,7 +13,7 @@ import {
   type Filters,
 } from "./filters";
 import type { Model } from "./model";
-import { outstandingAsOf, paidAsOf, receivablesSnapshot } from "./receivables";
+import { cashReceivedIn, outstandingAsOf, paidAsOf, receivablesSnapshot } from "./receivables";
 
 export interface KpiSet {
   period: { start: string; end: string; asOf: string };
@@ -56,12 +56,14 @@ export function computeKpis(model: Model, f: Filters): KpiSet {
   let volumeSqm = 0;
   let grossValue = 0;
   const customers = new Set<string>();
+  let deliveredLines = 0;
   for (const o of orders) {
+    if (o.order_status === "Delivered") deliveredLines += 1;
     netSales += o.net_sales_pkr;
     estCogs += o.est_cogs_pkr;
     volumeSqm += o.quantity_sqm;
     grossValue += o.quantity_sqm * o.list_price_per_sqm;
-    customers.add(o.customer_id);
+    if (o.order_status === "Delivered") customers.add(o.customer_id);
   }
   const estGrossProfit = netSales - estCogs;
 
@@ -73,7 +75,7 @@ export function computeKpis(model: Model, f: Filters): KpiSet {
   let invoicedValue = 0;
   let paidValue = 0;
   for (const inv of dimInvoices) {
-    if (inv.payment_date && inRange(inv.payment_date, f.start, f.end)) collections += inv.amount_paid_pkr;
+    collections += cashReceivedIn(inv, f.start, f.end);
     if (inRange(inv.invoice_date, f.start, f.end)) {
       invoicesRaised += 1;
       invoicedValue += inv.invoice_amount_pkr;
@@ -106,7 +108,7 @@ export function computeKpis(model: Model, f: Filters): KpiSet {
     estCogs,
     estGrossProfit,
     estGrossMarginPct: pct(estGrossProfit, netSales),
-    orderCount: orders.length,
+    orderCount: deliveredLines,
     volumeSqm,
     avgDiscountPct: grossValue > 0 ? (1 - netSales / grossValue) * 100 : null,
     activeCustomers: customers.size,

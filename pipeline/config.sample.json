@@ -1,0 +1,42 @@
+{
+  "_comment": "Map your SAP codes to business names. Copy to config.json and edit. Unmapped codes are passed through as they are.",
+  "date_format": "auto",
+  "invoice_billing_types": ["F2"],
+  "credit_billing_types": ["G2", "RE"],
+  "cancel_billing_types": ["S1", "S2"],
+  "fi_invoice_doc_types": ["RV"],
+  "fi_payment_doc_types": ["DZ"],
+  "fi_credit_doc_types": ["DG"],
+  "region_source": "BZIRK",
+  "regions": { "CEN": "Central", "NOR": "North", "SOU": "South", "WES": "West" },
+  "customer_groups": { "01": "Distributor", "02": "Dealer", "03": "Key Account", "04": "Institutional" },
+  "distribution_channels": { "10": "Distribution", "20": "Retail", "30": "Projects" },
+  "material_groups": {
+    "CFL": "Ceramic Floor",
+    "WAL": "Wall Tiles",
+    "PFL": "Porcelain Floor",
+    "GVT": "Glazed Vitrified (GVT)",
+    "OUT": "Outdoor & Parking"
+  },
+  "payment_terms": { "Z030": 30, "Z045": 45, "Z060": 60, "Z090": 90, "_default": 30 },
+  "complaint_codes": {
+    "SHD": "Shade Variation",
+    "SRF": "Surface Defect",
+    "CAL": "Size / Calibration",
+    "BRK": "Breakage in Transit",
+    "DLY": "Delivery Delay",
+    "SHT": "Short Supply",
+    "BIL": "Billing Discrepancy"
+  },
+  "complaint_teams": {
+    "Shade Variation": "Quality",
+    "Surface Defect": "Quality",
+    "Size / Calibration": "Production",
+    "Breakage in Transit": "Logistics",
+    "Delivery Delay": "Logistics",
+    "Short Supply": "Logistics",
+    "Billing Discrepancy": "Commercial"
+  },
+  "priority_severity": { "1": "High", "2": "High", "3": "Medium", "4": "Low" },
+  "claim_field": "ZZCLAIM"
+}

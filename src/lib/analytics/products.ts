@@ -10,6 +10,7 @@ import { previousPeriod } from "./dates";
 import { breakdown, type BreakdownRow } from "./breakdowns";
 import { filterOrders, type Filters } from "./filters";
 import type { Model } from "./model";
+import { getRules, type BusinessRules } from "../settings";
 
 export interface ProductRow extends BreakdownRow {
   category: string;
@@ -18,14 +19,21 @@ export interface ProductRow extends BreakdownRow {
   flags: string[];
 }
 
-export const PRODUCT_FLAG_RULES = {
-  decliningPct: -15,
-  minPrevShareForDecline: 1, // % of previous-period sales
-  weakMarginGapPts: 5,
-  marginErosionPts: -3,
-};
+/** Current product-flag thresholds (from company settings). */
+export function productFlagRules(rules: BusinessRules["products"] = getRules().products) {
+  return {
+    decliningPct: -rules.salesDropPct,
+    minPrevShareForDecline: 1, // % of previous-period sales
+    weakMarginGapPts: rules.weakMarginGapPts,
+    marginErosionPts: -rules.marginErosionPts,
+  };
+}
 
-export function productPerformance(model: Model, f: Filters): { rows: ProductRow[]; portfolioMarginPct: number | null } {
+export function productPerformance(
+  model: Model,
+  f: Filters,
+  rules: BusinessRules["products"] = getRules().products,
+): { rows: ProductRow[]; portfolioMarginPct: number | null } {
   const rows = breakdown(model, f, "product");
   const pp = previousPeriod(f.start, f.end);
   const prevOrders = filterOrders(model, { ...f, ...pp });
@@ -41,7 +49,7 @@ export function productPerformance(model: Model, f: Filters): { rows: ProductRow
   const totNs = rows.reduce((s, r) => s + r.netSales, 0);
   const totGp = rows.reduce((s, r) => s + r.estGrossProfit, 0);
   const portfolioMarginPct = totNs > 0 ? (totGp / totNs) * 100 : null;
-  const R = PRODUCT_FLAG_RULES;
+  const R = productFlagRules(rules);
 
   const out: ProductRow[] = rows.map((r) => {
     const p = prevAgg.get(r.key);

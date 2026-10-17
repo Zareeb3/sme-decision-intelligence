@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useReadyData } from "../DataProvider";
 import { Badge, DataTable, MetricCard, PageHeader, Panel } from "../ui";
 import { CountBars } from "../charts";
-import { complaintSummary, SPIKE_RULE } from "@/lib/analytics/complaints";
+import { complaintSummary, spikeRule } from "@/lib/analytics/complaints";
 import { filterComplaints } from "@/lib/analytics/filters";
 import { addMonths, monthKey, monthsBetween } from "@/lib/analytics/dates";
 import { formatDate, formatDays, formatNumber, formatPKR } from "@/lib/analytics/format";
@@ -23,6 +23,7 @@ export function ComplaintsView() {
   }, [ready]);
   if (!ready || !data) return null;
   const { s, monthly } = data;
+  const SPIKE_RULE = spikeRule(ready.settings.rules.complaints);
 
   return (
     <>

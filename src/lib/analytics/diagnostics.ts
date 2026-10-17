@@ -64,11 +64,14 @@ const pctChange = (a: number, b: number) => (b > 0 ? ((a - b) / b) * 100 : null)
 function paymentDelay(model: Model, f: Filters, start: string, end: string, keyFn: (i: { region: string; customer_type: string }) => string) {
   const m = new Map<string, { n: number; days: number }>();
   for (const inv of filterInvoicesByDims(model, f)) {
-    if (!inv.payment_date || !inRange(inv.payment_date, start, end)) continue;
+    // the final cash payment marks when the invoice was settled
+    const cash = inv.payments.filter((p) => p.type === "Payment");
+    const last = cash[cash.length - 1];
+    if (!last || !inRange(last.date, start, end)) continue;
     const k = keyFn(inv);
     const a = m.get(k) ?? { n: 0, days: 0 };
     a.n += 1;
-    a.days += daysBetween(inv.due_date, inv.payment_date);
+    a.days += daysBetween(inv.due_date, last.date);
     m.set(k, a);
   }
   return m;

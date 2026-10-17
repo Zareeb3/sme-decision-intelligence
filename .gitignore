@@ -9,3 +9,9 @@ coverage/
 .vercel
 .DS_Store
 __pycache__/
+.data/
+
+# Pipeline outputs and company-specific config (may contain real codes)
+canonical/
+pipeline/config.json
+pipeline_report.json

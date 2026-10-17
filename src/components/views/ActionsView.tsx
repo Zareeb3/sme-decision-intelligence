@@ -73,7 +73,8 @@ function ActionCard({ action }: { action: ProposedAction }) {
 
 export function ActionsView() {
   const ready = useReadyData();
-  const [threshold, setThreshold] = useState(10);
+  const [thresholdChoice, setThreshold] = useState<number | null>(null);
+  const threshold = thresholdChoice ?? Math.max(1, Math.round((ready?.settings.rules.actions.overdueAlertThreshold ?? 10_000_000) / 1_000_000));
   const [n8n, setN8n] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -103,7 +104,7 @@ export function ActionsView() {
         <label className="flex flex-wrap items-center gap-2 text-[0.85rem]">
           <span className="text-muted">Alert when a customer&apos;s overdue balance exceeds</span>
           <span className="inline-flex items-center rounded-md border border-line-strong bg-surface">
-            <span className="pl-2.5 text-muted">PKR</span>
+            <span className="pl-2.5 text-muted">{ready?.settings.currency ?? ""}</span>
             <input type="number" min={1} max={500} value={threshold} onChange={(e) => setThreshold(Math.max(1, Number(e.target.value) || 1))} className="h-9 w-20 bg-transparent px-2 text-right tabular-nums" />
             <span className="pr-2.5 text-muted">million</span>
           </span>

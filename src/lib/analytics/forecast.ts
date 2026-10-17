@@ -74,8 +74,8 @@ export function monthlyNetSalesHistory(model: Model, f: Filters): { month: strin
   const months = monthsBetween(model.minDate, `${end}-01`);
   const idx = new Map(months.map((m, i) => [m, i]));
   const vals = new Array(months.length).fill(0);
-  for (const o of model.bundle.orders) {
-    if (o.order_status !== "Delivered" || !matchesDims(f, o)) continue;
+  for (const o of model.orders) {
+    if (!matchesDims(f, o)) continue;
     const i = idx.get(monthKey(o.order_date));
     if (i !== undefined) vals[i] += o.net_sales_pkr;
   }

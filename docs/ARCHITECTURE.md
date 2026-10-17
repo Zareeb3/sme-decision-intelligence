@@ -33,6 +33,11 @@ flowchart TB
 | `lib/data/csv.ts` | RFC-4180 CSV parser | Small, no dependency, edge cases (quotes, BOM, CRLF) covered by tests |
 | `lib/data/schemas.ts` | Zod schema per dataset | One source of truth for column names, types and rules; error messages a manager can read |
 | `lib/data/validate.ts` | File-level and row-level validation, duplicate keys, cross-file checks | Bad rows are excluded *and reported*; a missing required column rejects the file |
+| `lib/data/mapping.ts`, `normalise.ts` | Column matching (business and SAP names), dataset detection, number/date/code normalisation, defaults, credit-note signs | Real exports never match a fixed schema; mapping is explicit, editable and remembered |
+| `lib/settings.ts` | Company profile, currency, fiscal year, partner type, business-rule thresholds | Every threshold the analytics use comes from one validated, editable place |
+| `lib/server/storage.ts`, `ingest.ts`, `api/data`, `api/ingest` | Server storage with version restore, ingest API, drop folder | Company data is shared and updated by pipelines without anyone uploading files |
+| `lib/ai/anonymise.ts` | Replace customer names in evidence before sending, restore afterwards | Customer names never need to leave the company |
+| `pipeline/sap_pipeline.py` | SAP VBRK/VBRP/KNA1/KNVV/BSID/BSAD/QMEL → canonical CSVs → ingest API | Runs inside the company network, close to SAP |
 | `lib/analytics/model.ts` | Indexes and joins, cached per dataset | Every analysis needs the same lookups; computing them once keeps functions simple |
 | `lib/analytics/filters.ts` | Shared filter semantics | Sales use order date, collections use payment date, receivables are a snapshot; written down once so every page agrees |
 | `lib/analytics/*.ts` | KPIs, receivables, trends, breakdowns, concentration, customers/health, products, anomalies, forecast, complaints, scenarios, diagnostics, insights | Pure functions, no UI and no AI, unit-tested |
@@ -87,6 +92,6 @@ flowchart TB
 
 The schemas describe generic B2B concepts (orders, customers, invoices, targets, complaints). To adapt to a different business:
 
-1. Map its ERP export columns to the schemas in `lib/data/schemas.ts` (a mapping step in the upload page is a natural next feature).
-2. Adjust thresholds in `customers.ts` (health rules), `products.ts` (flags), `complaints.ts` (spike rule) and `actions.ts` (alert threshold) with the business.
+1. Load its exports through **Set up your company**: columns are matched automatically and can be corrected per file; for SAP, use `pipeline/sap_pipeline.py` with a `config.json` of the company's codes ([SAP_INTEGRATION.md](SAP_INTEGRATION.md)).
+2. Set currency, fiscal year, volume unit, partner type and the business-rule thresholds in **Settings** with the business.
 3. Add domain-specific analyses as pure functions, register them in `ai/types.ts`, add router rules and evidence builders, and extend `evals/questions.json`.

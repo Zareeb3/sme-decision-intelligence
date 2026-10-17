@@ -74,6 +74,10 @@ export const evidencePacketSchema = z.object({
   period: z.object({ start: z.string(), end: z.string(), asOf: z.string() }),
   filtersDescription: z.string().max(300),
   dataSource: z.string().max(200),
+  /** ISO currency code of all money values in the packet. */
+  currency: z.string().min(3).max(3).default("PKR"),
+  /** Short description of the business, e.g. "Ceramic tiles manufacturing". */
+  industry: z.string().max(120).default(""),
   items: z.array(evidenceItemSchema).max(90),
   limitations: z.array(z.string().max(400)).max(15),
 });

@@ -1,0 +1,19 @@
+# One-command company deployment. Copy .env.example to .env and fill in the
+# values first (at least INGEST_TOKEN and the sign-in, for a company server).
+services:
+  app:
+    build: .
+    image: sme-decision-intelligence
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file: .env
+    environment:
+      DATA_DIR: /data
+    volumes:
+      - app-data:/data
+      # Optional: map a shared folder that SAP jobs write into as the drop folder.
+      # - /srv/sap_exports:/data/incoming
+
+volumes:
+  app-data:

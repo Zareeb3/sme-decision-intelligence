@@ -48,6 +48,33 @@ export function quarterKey(s: string): string {
   return `${s.slice(0, 4)}-Q${Math.ceil(m / 3)}`;
 }
 
+/**
+ * Quarter label honouring the fiscal year. With a January start this is the
+ * calendar quarter ("2026-Q3"). Otherwise fiscal years are named by the
+ * calendar year they end in: with a July start, Sep 2026 is "FY2027-Q1".
+ */
+export function fiscalQuarterKey(s: string, fiscalStartMonth = 1): string {
+  if (fiscalStartMonth === 1) return quarterKey(s);
+  const y = Number(s.slice(0, 4));
+  const m = Number(s.slice(5, 7));
+  const fy = m >= fiscalStartMonth ? y + 1 : y;
+  const q = Math.floor(((m - fiscalStartMonth + 12) % 12) / 3) + 1;
+  return `FY${fy}-Q${q}`;
+}
+
+/** First and last day of a fiscal year (named by its ending calendar year). */
+export function fiscalYearRange(fy: number, fiscalStartMonth = 1): { start: string; end: string } {
+  if (fiscalStartMonth === 1) return { start: `${fy}-01-01`, end: `${fy}-12-31` };
+  const startMonth = `${fy - 1}-${String(fiscalStartMonth).padStart(2, "0")}`;
+  return { start: monthStart(startMonth), end: monthEnd(addMonths(startMonth, 11)) };
+}
+
+/** Fiscal year (by ending year) that contains a date. */
+export function fiscalYearOf(s: string, fiscalStartMonth = 1): number {
+  const y = Number(s.slice(0, 4));
+  return fiscalStartMonth === 1 || Number(s.slice(5, 7)) < fiscalStartMonth ? y : y + 1;
+}
+
 export function monthStart(month: string): string {
   return `${month}-01`;
 }

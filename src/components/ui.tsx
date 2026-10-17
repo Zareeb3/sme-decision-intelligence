@@ -169,6 +169,25 @@ export interface Column<T> {
   render: (row: T) => ReactNode;
   align?: "left" | "right";
   sortValue?: (row: T) => number | string;
+  /** Value written to the CSV export; columns without it are left out of the export. */
+  csv?: (row: T) => string | number | null;
+  /** Included in the CSV export only, not shown on screen. */
+  exportOnly?: boolean;
+}
+
+function downloadRowsCsv<T>(name: string, rows: T[], columns: Column<T>[]) {
+  const cols = columns.filter((c) => c.csv);
+  const esc = (v: unknown) => {
+    const s = v === null || v === undefined ? "" : String(v);
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const text = [cols.map((c) => esc(c.header)).join(","), ...rows.map((r) => cols.map((c) => esc(c.csv!(r))).join(","))].join("\n");
+  const url = URL.createObjectURL(new Blob([text], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${name}.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export function DataTable<T>({
@@ -178,6 +197,7 @@ export function DataTable<T>({
   empty = "No rows match the current filters.",
   onRowClick,
   maxRows,
+  exportName,
 }: {
   rows: T[];
   columns: Column<T>[];
@@ -185,15 +205,18 @@ export function DataTable<T>({
   empty?: string;
   onRowClick?: (row: T) => void;
   maxRows?: number;
+  /** When set, shows a "Download CSV" link exporting all rows (not only the visible ones). */
+  exportName?: string;
 }) {
   if (rows.length === 0) return <p className="py-6 text-center text-sm text-muted">{empty}</p>;
   const shown = maxRows ? rows.slice(0, maxRows) : rows;
+  const visible = columns.filter((c) => !c.exportOnly);
   return (
     <div className="-mx-5 overflow-x-auto">
       <table className="w-full min-w-[560px] border-collapse text-[0.85rem]">
         <thead>
           <tr className="border-b border-line text-left text-[0.75rem] text-muted">
-            {columns.map((c) => (
+            {visible.map((c) => (
               <th key={c.key} scope="col" className={`whitespace-nowrap px-5 py-2 font-medium ${c.align === "right" ? "text-right" : ""}`}>
                 {c.header}
               </th>
@@ -207,7 +230,7 @@ export function DataTable<T>({
               onClick={onRowClick ? () => onRowClick(r) : undefined}
               className={`border-b border-line/70 last:border-0 ${onRowClick ? "cursor-pointer hover:bg-glaze-soft/50" : ""}`}
             >
-              {columns.map((c) => (
+              {visible.map((c) => (
                 <td key={c.key} className={`px-5 py-2 align-top ${c.align === "right" ? "whitespace-nowrap text-right tabular-nums" : ""}`}>
                   {c.render(r)}
                 </td>
@@ -216,7 +239,14 @@ export function DataTable<T>({
           ))}
         </tbody>
       </table>
-      {maxRows && rows.length > maxRows && <p className="px-5 pt-2 text-[0.75rem] text-faint">Showing {maxRows} of {rows.length} rows.</p>}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-5 pt-2">
+        {maxRows && rows.length > maxRows ? <p className="text-[0.75rem] text-faint">Showing {maxRows} of {rows.length} rows.</p> : <span />}
+        {exportName && columns.some((c) => c.csv) && (
+          <button type="button" onClick={() => downloadRowsCsv(exportName, rows, columns)} className="text-[0.78rem] text-glaze hover:underline print:hidden">
+            Download CSV ({rows.length} rows)
+          </button>
+        )}
+      </div>
     </div>
   );
 }

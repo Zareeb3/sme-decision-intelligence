@@ -17,15 +17,15 @@ The same definitions appear in the app (the **?** on each metric) and live in co
 
 | Metric | Definition | Formula | Period | Limitations |
 |---|---|---|---|---|
-| **Net sales** | Value of delivered orders after discount | Σ `net_sales_pkr`, `order_status = Delivered` | Order date in period | Order-date based; returns and credit notes not in dataset |
+| **Net sales** | Value of delivered orders after discount, less credit notes | Σ `net_sales_pkr` for Delivered lines − Σ for Credit Note lines | Order (billing) date in period | Order-date based; credit notes count in the period they are issued |
 | **Estimated COGS** | Estimated cost of goods sold | Σ `est_cogs_pkr` | Same orders | Standard cost estimates, not audited |
 | **Estimated gross profit** | Net sales − estimated COGS | | Same orders | Excludes freight, rebates |
 | **Estimated gross margin** | Gross profit ÷ net sales × 100 | | Same orders | Inherits cost limitations |
 | **Average discount** | Discount as share of list value | 1 − net sales ÷ Σ(quantity × list price) | Same orders | Value-weighted |
 | **Sales target attainment** | Net sales ÷ sales target × 100 | | Targets for months in period | Region/month targets only |
-| **Collections** | Payments received | Σ `amount_paid_pkr` where `payment_date` in period | Payment date in period | One payment record per invoice |
+| **Collections** | Cash received | Σ payments with `payment_type = Payment` and `payment_date` in period (from payments.csv; otherwise the invoice's paid amount and date) | Payment date in period | Credit notes reduce balances but are not cash |
 | **Collection target attainment** | Collections ÷ collection target × 100 | | As above | As above |
-| **Outstanding receivables** | Unpaid balance at the snapshot | Σ max(0, amount − payments on or before snapshot), invoices dated on or before snapshot | Snapshot (includes invoices from before the period) | No credit notes or unapplied cash |
+| **Outstanding receivables** | Unpaid balance at the snapshot | Σ max(0, amount − payments and credit notes on or before snapshot), invoices dated on or before snapshot | Snapshot (includes invoices from before the period) | Unapplied cash not modelled |
 | **Overdue balance** | Outstanding on invoices past due | Σ outstanding where `due_date` < snapshot | Snapshot | Agreed extensions not recorded |
 | **Overdue share** | Overdue ÷ outstanding × 100 | | Snapshot | Falls when recent invoicing rises, even if old debts remain |
 | **90+ days past due** | Outstanding more than 90 days past due | | Snapshot | |
@@ -40,6 +40,10 @@ The same definitions appear in the app (the **?** on each metric) and live in co
 | **Average resolution time** | Mean days from opened to resolved | | Resolved in period | |
 
 ## Rule-based indicators (not KPIs)
+
+All thresholds below are the defaults. Each company can change them in **Settings → Business rules**; the app always shows the rule text with the values in force.
+
+**Fiscal year.** Quarter and year presets follow the fiscal-year start month in Settings. A fiscal year is named by the calendar year in which it ends (July start: Jul 2026 – Jun 2027 is FY2027, Jul–Sep 2026 is FY2027-Q1).
 
 ### Account health score (`customers.ts`)
 

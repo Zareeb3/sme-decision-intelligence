@@ -5,10 +5,9 @@ import { useReadyData } from "../DataProvider";
 import { Badge, bandTone, DataTable, Delta, MetricCard, PageHeader, Panel, ShareBar } from "../ui";
 import { ParetoChart } from "../charts";
 import { customerConcentration } from "@/lib/analytics/concentration";
-import { customerProfiles, HEALTH_RULES, type CustomerProfile } from "@/lib/analytics/customers";
+import { customerProfiles, healthRuleDescriptions, type CustomerProfile } from "@/lib/analytics/customers";
 import { formatDate, formatNumber, formatPKR, formatPct } from "@/lib/analytics/format";
 
-const TYPES = ["All", "Distributor", "Dealer", "Key Account", "Institutional"] as const;
 const BANDS = ["Healthy", "Watch", "Needs attention", "Insufficient data"] as const;
 
 function CustomerDetail({ p, onClose }: { p: CustomerProfile; onClose: () => void }) {
@@ -63,7 +62,7 @@ function CustomerDetail({ p, onClose }: { p: CustomerProfile; onClose: () => voi
 
 export function CustomersView() {
   const ready = useReadyData();
-  const [type, setType] = useState<(typeof TYPES)[number]>("Distributor");
+  const [typeChoice, setType] = useState<string | null>(null);
   const [band, setBand] = useState<string>("All");
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
@@ -75,6 +74,9 @@ export function CustomersView() {
   }, [ready]);
   if (!ready || !data) return null;
   const { conc, profiles } = data;
+  const types = [...new Set(profiles.map((p) => p.customer_type))].sort();
+  const partner = ready.settings.partnerType;
+  const type = typeChoice ?? (types.some((t) => t.toLowerCase() === partner.toLowerCase()) ? types.find((t) => t.toLowerCase() === partner.toLowerCase())! : "All");
 
   const scoped = profiles.filter((p) => type === "All" || p.customer_type === type);
   const shown = scoped
@@ -86,7 +88,7 @@ export function CustomersView() {
 
   return (
     <>
-      <PageHeader title="Customers & distributors" description="Who the business depends on, and which accounts need a conversation. Customer filters use each account's own region and channel." />
+      <PageHeader title="Customers & partners" description="Who the business depends on, and which accounts need a conversation. Customer filters use each account's own region and channel." />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="Largest customer" metricId="topCustomerShare" value={formatPct(conc.top1SharePct)} sub={conc.ranked[0]?.customer_name ?? "—"} />
@@ -131,9 +133,9 @@ export function CustomersView() {
           <details className="relative">
             <summary className="rounded-md border border-line-strong px-3 py-1.5 text-[0.8rem] text-ink hover:border-glaze">How the score works</summary>
             <div className="absolute right-0 top-10 z-30 w-[22rem] rounded-md border border-line-strong bg-surface p-3.5 text-[0.8rem] shadow-lg">
-              <p className="text-muted">Each account starts at 100. Points are deducted when a rule is triggered. 80+ is Healthy, 60–79 Watch, below 60 Needs attention. Thresholds are starting assumptions to tune with the sales and finance teams.</p>
+              <p className="text-muted">Each account starts at 100. Points are deducted when a rule is triggered. Thresholds are set in Settings and should be agreed with the sales and finance teams.</p>
               <ul className="mt-2 space-y-1.5">
-                {HEALTH_RULES.map((r) => (
+                {healthRuleDescriptions(ready.settings.rules.health).map((r) => (
                   <li key={r.rule}><span className="font-medium">{r.rule}.</span> <span className="text-muted">{r.detail}</span></li>
                 ))}
               </ul>
@@ -142,8 +144,8 @@ export function CustomersView() {
         }
       >
         <div className="mb-4 flex flex-wrap items-center gap-2">
-          <select aria-label="Customer type" value={type} onChange={(e) => setType(e.target.value as (typeof TYPES)[number])} className="h-9 rounded-md border border-line-strong bg-surface px-2.5 text-[0.82rem]">
-            {TYPES.map((t) => <option key={t} value={t}>{t === "All" ? "All customer types" : `${t}s`}</option>)}
+          <select aria-label="Customer type" value={type} onChange={(e) => setType(e.target.value)} className="h-9 rounded-md border border-line-strong bg-surface px-2.5 text-[0.82rem]">
+            {["All", ...types].map((t) => <option key={t} value={t}>{t === "All" ? "All customer types" : t}</option>)}
           </select>
           <div className="flex flex-wrap gap-1.5">
             {["All", ...BANDS].map((b) => {
@@ -162,13 +164,18 @@ export function CustomersView() {
           rowKey={(p) => p.customer_id}
           onRowClick={(p) => setSelected(p.customer_id)}
           maxRows={40}
+          exportName={`account-health-${ready.filters.end}`}
           columns={[
-            { key: "n", header: "Customer", render: (p) => <div><p className="font-medium">{p.customer_name}</p><p className="text-[0.72rem] text-faint">{p.customer_id} · {p.customer_type}, {p.region}{p.account_status !== "Active" ? ` · ${p.account_status}` : ""}</p></div> },
-            { key: "h", header: "Health", render: (p) => <div className="flex items-center gap-2"><span className="w-7 text-right font-medium tabular-nums">{p.healthScore ?? "—"}</span><Badge tone={bandTone(p.healthBand)}>{p.healthBand}</Badge></div> },
-            { key: "s", header: "Net sales (period)", align: "right", render: (p) => formatPKR(p.periodNetSales) },
+            { key: "id", header: "Customer ID", csv: (p) => p.customer_id, render: () => null, exportOnly: true },
+            { key: "ty", header: "Type", csv: (p) => p.customer_type, render: () => null, exportOnly: true },
+            { key: "rg", header: "Region", csv: (p) => p.region, render: () => null, exportOnly: true },
+            { key: "why", header: "Reasons", csv: (p) => p.deductions.map((d) => d.evidence).join("; "), render: () => null, exportOnly: true },
+            { key: "n", header: "Customer", csv: (p) => p.customer_name, render: (p) => <div><p className="font-medium">{p.customer_name}</p><p className="text-[0.72rem] text-faint">{p.customer_id} · {p.customer_type}, {p.region}{p.account_status !== "Active" ? ` · ${p.account_status}` : ""}</p></div> },
+            { key: "h", header: "Health", csv: (p) => `${p.healthScore ?? ""} ${p.healthBand}`, render: (p) => <div className="flex items-center gap-2"><span className="w-7 text-right font-medium tabular-nums">{p.healthScore ?? "—"}</span><Badge tone={bandTone(p.healthBand)}>{p.healthBand}</Badge></div> },
+            { key: "s", header: "Net sales (period)", align: "right", csv: (p) => Math.round(p.periodNetSales), render: (p) => formatPKR(p.periodNetSales) },
             { key: "t", header: "90-day trend", align: "right", render: (p) => <Delta value={p.salesTrendPct} digits={0} /> },
             { key: "r", header: "Last order", align: "right", render: (p) => (p.recencyDays === null ? "—" : `${p.recencyDays}d ago`) },
-            { key: "o", header: "Overdue", align: "right", render: (p) => formatPKR(p.overdue) },
+            { key: "o", header: "Overdue", align: "right", csv: (p) => Math.round(p.overdue), render: (p) => formatPKR(p.overdue) },
             { key: "c", header: "Credit used", align: "right", render: (p) => formatPct(p.creditUtilizationPct, 0) },
           ]}
         />

@@ -25,8 +25,11 @@ interface Num {
 
 const MULT: Record<string, number> = { b: 1e9, bn: 1e9, billion: 1e9, m: 1e6, mn: 1e6, million: 1e6, k: 1e3, thousand: 1e3 };
 
-const NUMBER_RE =
-  /(PKR|Rs\.?)?\s?([−-])?(\d{1,3}(?:,\d{3})+|\d+)(?:\.(\d+))?(?:\s?(billion|million|thousand|bn|mn|B|M|K)(?![a-z]))?\s?(%|percent|pts|percentage points|days?)?/gi;
+const numberRe = (currency: string) =>
+  new RegExp(
+    `(${currency}|PKR|Rs\\.?)?\\s?([−-])?(\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.(\\d+))?(?:\\s?(billion|million|thousand|bn|mn|B|M|K)(?![a-z]))?\\s?(%|percent|pts|percentage points|days?)?`,
+    "gi",
+  );
 
 /** Remove tokens that contain digits but are not quantities. */
 function stripNonQuantities(text: string): string {
@@ -43,10 +46,10 @@ function stripNonQuantities(text: string): string {
     .replace(/\b(19|20)\d{2}\b/g, " "); // bare years
 }
 
-export function extractNumbers(text: string): Num[] {
+export function extractNumbers(text: string, currency = "PKR"): Num[] {
   const out: Num[] = [];
   const cleaned = stripNonQuantities(text);
-  for (const m of cleaned.matchAll(NUMBER_RE)) {
+  for (const m of cleaned.matchAll(numberRe(currency.replace(/[^A-Za-z]/g, "") || "PKR"))) {
     const [raw, currency, minus, intPart, decPart, suffix, unit] = m;
     if (!intPart) continue;
     const base = Number(intPart.replace(/,/g, "") + (decPart ? `.${decPart}` : ""));
@@ -76,10 +79,10 @@ function allowedNumbers(packet: EvidencePacket): { money: number[]; plain: numbe
       // magnitudes are also fine (e.g. "fell by 5.2%" for a −5.2% change)
       if (item.value < 0) (item.unit === "PKR" ? money : plain).push(-item.value);
     }
-    for (const n of extractNumbers(`${item.display} ${item.label}`)) (n.kind === "money" ? money : plain).push(n.value, Math.abs(n.value));
+    for (const n of extractNumbers(`${item.display} ${item.label}`, packet.currency)) (n.kind === "money" ? money : plain).push(n.value, Math.abs(n.value));
   }
-  for (const n of extractNumbers(packet.question)) (n.kind === "money" ? money : plain).push(n.value);
-  for (const l of packet.limitations) for (const n of extractNumbers(l)) plain.push(n.value);
+  for (const n of extractNumbers(packet.question, packet.currency)) (n.kind === "money" ? money : plain).push(n.value);
+  for (const l of packet.limitations) for (const n of extractNumbers(l, packet.currency)) plain.push(n.value);
   return { money, plain };
 }
 
@@ -100,7 +103,7 @@ export function checkGrounding(response: AnalystResponse, packet: EvidencePacket
   let checked = 0;
 
   const checkText = (text: string, section: GroundingIssue["section"], index: number) => {
-    for (const n of extractNumbers(text)) {
+    for (const n of extractNumbers(text, packet.currency)) {
       checked++;
       if (!isAllowed(n, allowed)) {
         unverified.add(n.raw);

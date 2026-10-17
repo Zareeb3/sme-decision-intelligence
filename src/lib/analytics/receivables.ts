@@ -14,9 +14,18 @@ import type { EnrichedInvoice, Model } from "./model";
 export const AGING_BUCKETS = ["Not yet due", "1–30 days", "31–60 days", "61–90 days", "90+ days"] as const;
 export type AgingBucket = (typeof AGING_BUCKETS)[number];
 
-/** Amount paid on or before `asOf`. Single payment record per invoice (dataset simplification). */
+/** Payments and credits applied on or before `asOf` (all payment records for the invoice). */
 export function paidAsOf(inv: EnrichedInvoice, asOf: string): number {
-  return inv.payment_date && inv.payment_date <= asOf ? inv.amount_paid_pkr : 0;
+  let paid = 0;
+  for (const p of inv.payments) if (p.date <= asOf) paid += p.amount;
+  return paid;
+}
+
+/** Cash received for the invoice within [start, end]; credit notes are not cash. */
+export function cashReceivedIn(inv: EnrichedInvoice, start: string, end: string): number {
+  let cash = 0;
+  for (const p of inv.payments) if (p.type === "Payment" && p.date >= start && p.date <= end) cash += p.amount;
+  return cash;
 }
 
 /** Outstanding balance on `asOf`; zero for invoices raised after `asOf`. Never negative. */

@@ -9,21 +9,39 @@
 
 export interface ParsedCsv {
   headers: string[];
+  delimiter: string;
   rows: Record<string, string>[];
   /** Rows whose column count differed from the header (1-based line numbers). */
   malformedLines: number[];
 }
 
-export function parseCsv(text: string): ParsedCsv {
-  const records = tokenize(text.replace(/^﻿/, ""));
-  // drop fully blank lines
-  const nonEmpty = records.filter((r) => !(r.fields.length === 1 && r.fields[0].trim() === ""));
-  if (nonEmpty.length === 0) return { headers: [], rows: [], malformedLines: [] };
+/**
+ * Pick the delimiter from the first line: comma, semicolon (European Excel),
+ * tab (SAP "text with tabs") or pipe (SAP list output).
+ */
+export function detectDelimiter(text: string): string {
+  const firstLine = (text.split(/\r?\n/).find((l) => l.trim() !== "" && !/^[-+|\s]+$/.test(l)) ?? "").replace(/"[^"]*"/g, "");
+  const counts: [string, number][] = [",", ";", "\t", "|"].map((d) => [d, firstLine.split(d).length - 1]);
+  counts.sort((a, b) => b[1] - a[1]);
+  return counts[0][1] > 0 ? counts[0][0] : ",";
+}
 
-  const headers = nonEmpty[0].fields.map((h) => h.trim().toLowerCase().replace(/\s+/g, "_"));
+export function parseCsv(text: string): ParsedCsv {
+  const clean = text.replace(/^\uFEFF/, "");
+  const delimiter = detectDelimiter(clean);
+  let records = tokenize(clean, delimiter);
+  // drop fully blank lines and SAP list ruler lines such as "-----" or "|---|---|"
+  records = records.filter((r) => !(r.fields.every((x) => x.trim() === "") || r.fields.every((x) => /^[-+=\s]*$/.test(x))));
+  if (delimiter === "|") {
+    // SAP list output wraps each line in pipes: "|A|B|" -> ["", "A", "B", ""]
+    records = records.map((r) => ({ ...r, fields: r.fields[0].trim() === "" && r.fields.length > 1 ? r.fields.slice(1, r.fields[r.fields.length - 1].trim() === "" ? -1 : undefined) : r.fields }));
+  }
+  if (records.length === 0) return { headers: [], rows: [], malformedLines: [], delimiter };
+
+  const headers = records[0].fields.map((h) => h.trim().toLowerCase().replace(/\s+/g, "_"));
   const rows: Record<string, string>[] = [];
   const malformedLines: number[] = [];
-  for (const rec of nonEmpty.slice(1)) {
+  for (const rec of records.slice(1)) {
     if (rec.fields.length !== headers.length) {
       malformedLines.push(rec.line);
       continue;
@@ -34,7 +52,7 @@ export function parseCsv(text: string): ParsedCsv {
     });
     rows.push(row);
   }
-  return { headers, rows, malformedLines };
+  return { headers, rows, malformedLines, delimiter };
 }
 
 interface RawRecord {
@@ -42,7 +60,7 @@ interface RawRecord {
   line: number;
 }
 
-function tokenize(text: string): RawRecord[] {
+function tokenize(text: string, delimiter: string): RawRecord[] {
   const out: RawRecord[] = [];
   let field = "";
   let fields: string[] = [];
@@ -68,7 +86,7 @@ function tokenize(text: string): RawRecord[] {
     }
     if (ch === '"') {
       inQuotes = true;
-    } else if (ch === ",") {
+    } else if (ch === delimiter) {
       fields.push(field);
       field = "";
     } else if (ch === "\n" || ch === "\r") {

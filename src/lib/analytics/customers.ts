@@ -12,6 +12,8 @@ import { asOfDate, matchesDims, type Filters } from "./filters";
 import type { Model } from "./model";
 import { daysPastDue, outstandingAsOf } from "./receivables";
 import { median } from "./anomalies";
+import { formatPKR } from "./format";
+import { getRules, type BusinessRules } from "../settings";
 
 export interface HealthDeduction {
   rule: string;
@@ -55,22 +57,28 @@ export interface CustomerProfile {
   deductions: HealthDeduction[];
 }
 
-export const HEALTH_RULES = [
-  { rule: "Overdue share of outstanding", detail: "More than 50% overdue: −20. More than 25%: −10." },
-  { rule: "Oldest overdue invoice", detail: "More than 90 days past due: −20. More than 60 days: −10." },
-  {
-    rule: "Order recency vs the customer's own rhythm",
-    detail: "Days since last order more than 3× the customer's usual gap between orders (and over 60 days): −20. More than 2× (and over 45 days): −10.",
-  },
-  { rule: "Sales trend (last 90 days vs previous 90)", detail: "Down more than 30%: −15. Down more than 10%: −5." },
-  { rule: "Credit utilisation", detail: "Outstanding above 100% of credit limit: −15. Above 80%: −5." },
-  { rule: "Open high-severity complaints", detail: "One or more: −5." },
-  { rule: "Data sufficiency", detail: "Fewer than 3 orders in the last 12 months and no balance: not scored." },
-] as const;
+/** Plain-English description of the active health rules, for the UI and documentation. */
+export function healthRuleDescriptions(rules: BusinessRules["health"] = getRules().health) {
+  const r = rules;
+  return [
+    { rule: "Overdue share of outstanding", detail: `More than ${r.overdueShareHighPct}% overdue: −20. More than ${r.overdueShareWatchPct}%: −10.` },
+    { rule: "Oldest overdue invoice", detail: `More than ${r.oldestOverdueHighDays} days past due: −20. More than ${r.oldestOverdueWatchDays} days: −10.` },
+    {
+      rule: "Order recency vs the customer's own rhythm",
+      detail: "Days since last order more than 3× the customer's usual gap between orders (and over 60 days): −20. More than 2× (and over 45 days): −10.",
+    },
+    { rule: "Sales trend (last 90 days vs previous 90)", detail: `Down more than ${r.salesDropHighPct}%: −15. Down more than ${r.salesDropWatchPct}%: −5.` },
+    { rule: "Credit utilisation", detail: `Outstanding above ${r.creditUseHighPct}% of credit limit: −15. Above ${r.creditUseWatchPct}%: −5.` },
+    { rule: "Open high-severity complaints", detail: "One or more: −5." },
+    { rule: "Bands", detail: `${r.healthyFrom}+ Healthy, ${r.watchFrom}–${r.healthyFrom - 1} Watch, below ${r.watchFrom} Needs attention.` },
+    { rule: "Data sufficiency", detail: "Fewer than 3 orders in the last 12 months and no balance: not scored." },
+  ];
+}
 
-const fmtM = (n: number) => `PKR ${(n / 1e6).toFixed(1)}M`;
+const fmtM = (n: number) => formatPKR(n);
 
-export function customerProfiles(model: Model, f: Filters): CustomerProfile[] {
+export function customerProfiles(model: Model, f: Filters, rules: BusinessRules["health"] = getRules().health): CustomerProfile[] {
+  const R = rules;
   const asOf = asOfDate(model, f);
   const d90 = addDays(asOf, -89);
   const d180 = addDays(asOf, -179);
@@ -90,8 +98,9 @@ export function customerProfiles(model: Model, f: Filters): CustomerProfile[] {
   };
 
   let periodTotal = 0;
-  for (const o of model.bundle.orders) {
-    if (o.order_status !== "Delivered" || o.order_date > asOf) continue;
+  for (const o of model.orders) {
+    if (o.order_date > asOf) continue;
+    const isSale = o.order_status === "Delivered";
     const a = get(o.customer_id);
     if (inRange(o.order_date, f.start, f.end) && matchesDims(f, o)) {
       a.period += o.net_sales_pkr;
@@ -99,6 +108,8 @@ export function customerProfiles(model: Model, f: Filters): CustomerProfile[] {
     }
     if (o.order_date >= d90) a.s90 += o.net_sales_pkr;
     if (inRange(o.order_date, prevStart, prevEnd)) a.sPrev90 += o.net_sales_pkr;
+    // order frequency and recency count real sales only, not credit notes
+    if (!isSale) continue;
     if (o.order_date >= d180) a.o180 += 1;
     if (o.order_date >= d365) {
       a.o365 += 1;
@@ -149,12 +160,12 @@ export function customerProfiles(model: Model, f: Filters): CustomerProfile[] {
     const deductions: HealthDeduction[] = [];
     const sufficient = a.o365 >= 3 || r.out > 0;
     if (sufficient) {
-      if (overdueShare !== null && overdueShare > 50)
+      if (overdueShare !== null && overdueShare > R.overdueShareHighPct)
         deductions.push({ rule: "Overdue share", points: 20, evidence: `${overdueShare.toFixed(0)}% of ${fmtM(r.out)} outstanding is overdue` });
-      else if (overdueShare !== null && overdueShare > 25)
+      else if (overdueShare !== null && overdueShare > R.overdueShareWatchPct)
         deductions.push({ rule: "Overdue share", points: 10, evidence: `${overdueShare.toFixed(0)}% of ${fmtM(r.out)} outstanding is overdue` });
-      if (r.oldest > 90) deductions.push({ rule: "Oldest overdue", points: 20, evidence: `Oldest overdue invoice is ${r.oldest} days past due` });
-      else if (r.oldest > 60) deductions.push({ rule: "Oldest overdue", points: 10, evidence: `Oldest overdue invoice is ${r.oldest} days past due` });
+      if (r.oldest > R.oldestOverdueHighDays) deductions.push({ rule: "Oldest overdue", points: 20, evidence: `Oldest overdue invoice is ${r.oldest} days past due` });
+      else if (r.oldest > R.oldestOverdueWatchDays) deductions.push({ rule: "Oldest overdue", points: 10, evidence: `Oldest overdue invoice is ${r.oldest} days past due` });
       const gap = a.gaps.length >= 2 ? median(a.gaps) : null;
       const gapText = gap !== null ? ` (usual gap between orders: ${Math.round(gap)} days)` : "";
       if (recency === null)
@@ -163,18 +174,18 @@ export function customerProfiles(model: Model, f: Filters): CustomerProfile[] {
         deductions.push({ rule: "Order recency", points: 20, evidence: `Last order ${recency} days ago${gapText}` });
       else if (recency > 45 && (gap === null || recency > 2 * gap))
         deductions.push({ rule: "Order recency", points: 10, evidence: `Last order ${recency} days ago${gapText}` });
-      if (trend !== null && trend < -30)
+      if (trend !== null && trend < -R.salesDropHighPct)
         deductions.push({ rule: "Sales trend", points: 15, evidence: `Last 90 days ${fmtM(a.s90)} vs ${fmtM(a.sPrev90)} in the previous 90 (${trend.toFixed(0)}%)` });
-      else if (trend !== null && trend < -10)
+      else if (trend !== null && trend < -R.salesDropWatchPct)
         deductions.push({ rule: "Sales trend", points: 5, evidence: `Last 90 days ${fmtM(a.s90)} vs ${fmtM(a.sPrev90)} in the previous 90 (${trend.toFixed(0)}%)` });
-      if (util !== null && util > 100)
+      if (util !== null && util > R.creditUseHighPct)
         deductions.push({ rule: "Credit utilisation", points: 15, evidence: `Outstanding is ${util.toFixed(0)}% of the ${fmtM(c.credit_limit_pkr)} credit limit` });
-      else if (util !== null && util > 80)
+      else if (util !== null && util > R.creditUseWatchPct)
         deductions.push({ rule: "Credit utilisation", points: 5, evidence: `Outstanding is ${util.toFixed(0)}% of the ${fmtM(c.credit_limit_pkr)} credit limit` });
       if (highOpen > 0) deductions.push({ rule: "Open high-severity complaints", points: 5, evidence: `${highOpen} open high-severity complaint(s)` });
     }
     const score = sufficient ? Math.max(0, 100 - deductions.reduce((s, d) => s + d.points, 0)) : null;
-    const band: HealthBand = score === null ? "Insufficient data" : score >= 80 ? "Healthy" : score >= 60 ? "Watch" : "Needs attention";
+    const band: HealthBand = score === null ? "Insufficient data" : score >= R.healthyFrom ? "Healthy" : score >= R.watchFrom ? "Watch" : "Needs attention";
 
     profiles.push({
       customer_id: c.customer_id,

@@ -86,13 +86,15 @@ export function ReceivablesView() {
           rows={customers}
           rowKey={(r) => r.customer_id}
           maxRows={30}
+          exportName={`open-balances-${snap.asOf}`}
           columns={[
-            { key: "n", header: "Customer", render: (r) => <div><p className="font-medium">{r.customer_name}</p><p className="text-[0.72rem] text-faint">{r.customer_type}, {r.region} · {r.payment_terms_days}-day terms</p></div> },
-            { key: "o", header: "Outstanding", align: "right", render: (r) => formatPKR(r.outstanding) },
-            { key: "d", header: "Overdue", align: "right", render: (r) => <span className={r.overdue > 0 ? "font-medium" : "text-faint"}>{formatPKR(r.overdue)}</span> },
-            { key: "9", header: "90+ days", align: "right", render: (r) => <span className={r.over90 > 0 ? "text-oxide" : "text-faint"}>{formatPKR(r.over90)}</span> },
-            { key: "a", header: "Oldest overdue", align: "right", render: (r) => (r.oldestDaysPastDue ? `${r.oldestDaysPastDue} days` : "—") },
-            { key: "c", header: "Credit used", align: "right", render: (r) => <span className={(r.creditUtilizationPct ?? 0) > 100 ? "font-medium text-oxide" : ""}>{formatPct(r.creditUtilizationPct, 0)}</span> },
+            { key: "n", header: "Customer", csv: (r) => r.customer_name, render: (r) => <div><p className="font-medium">{r.customer_name}</p><p className="text-[0.72rem] text-faint">{r.customer_type}, {r.region} · {r.payment_terms_days}-day terms</p></div> },
+            { key: "id", header: "Customer ID", csv: (r) => r.customer_id, render: () => null, exportOnly: true },
+            { key: "o", header: "Outstanding", align: "right", csv: (r) => Math.round(r.outstanding), render: (r) => formatPKR(r.outstanding) },
+            { key: "d", header: "Overdue", align: "right", csv: (r) => Math.round(r.overdue), render: (r) => <span className={r.overdue > 0 ? "font-medium" : "text-faint"}>{formatPKR(r.overdue)}</span> },
+            { key: "9", header: "90+ days", align: "right", csv: (r) => Math.round(r.over90), render: (r) => <span className={r.over90 > 0 ? "text-oxide" : "text-faint"}>{formatPKR(r.over90)}</span> },
+            { key: "a", header: "Oldest overdue", align: "right", csv: (r) => r.oldestDaysPastDue, render: (r) => (r.oldestDaysPastDue ? `${r.oldestDaysPastDue} days` : "—") },
+            { key: "c", header: "Credit used", align: "right", csv: (r) => (r.creditUtilizationPct === null ? "" : Math.round(r.creditUtilizationPct)), render: (r) => <span className={(r.creditUtilizationPct ?? 0) > 100 ? "font-medium text-oxide" : ""}>{formatPct(r.creditUtilizationPct, 0)}</span> },
           ]}
         />
       </Panel>

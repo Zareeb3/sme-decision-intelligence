@@ -21,6 +21,9 @@ Scenarios: "If we collect 10% more of the overdue balance, collections rise by a
 **1:55 – Close (5 s)**
 "Deterministic analytics for the numbers, AI for the explanation, people for the decisions, tested against an independent pandas implementation."
 
+## If asked "how do we get our data in?" (1 min)
+Data sources → **Automated pipeline** tab: "Nightly SAP extract, our script maps your codes, and the app validates and loads it; invalid loads never replace good data, and each dataset can be restored to its previous version." Then **Upload** tab: drop `data/example_exports/sales_register_export.csv` (semicolon-separated, day-first dates, business column names) and open **Columns** to show the automatic matching. Settings: "Your currency, fiscal year and thresholds; the sample company can be switched off entirely."
+
 ## If asked a follow-up
 - *Data quality?* Data page → upload `messy/orders_with_errors.csv` with the sample customers and invoices: row-level errors with line numbers.
 - *Filters?* Choose Region: South; every KPI and chart updates consistently.

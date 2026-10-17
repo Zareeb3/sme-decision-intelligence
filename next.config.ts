@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Docker builds set NEXT_OUTPUT=standalone to produce a small self-contained server.
+  output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
   reactStrictMode: true,
   poweredByHeader: false,
   async headers() {

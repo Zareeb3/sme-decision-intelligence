@@ -5,6 +5,7 @@
 import { addDays, daysBetween, inRange } from "./dates";
 import { asOfDate, filterComplaints, type Filters } from "./filters";
 import type { EnrichedComplaint, Model } from "./model";
+import { getRules, type BusinessRules } from "../settings";
 
 export interface ComplaintSummary {
   asOf: string;
@@ -39,9 +40,12 @@ const isOpenAt = (c: EnrichedComplaint, asOf: string) =>
  * a product is flagged when it has at least 3 complaints in the last 60 days of
  * the period AND at least 3× its average 60-day count over the prior 12 months.
  */
-export const SPIKE_RULE = { windowDays: 60, minCount: 3, minRatio: 3 };
+export function spikeRule(rules: BusinessRules["complaints"] = getRules().complaints) {
+  return { windowDays: rules.spikeWindowDays, minCount: rules.spikeMinCount, minRatio: rules.spikeMinRatio };
+}
 
-export function complaintSummary(model: Model, f: Filters): ComplaintSummary {
+export function complaintSummary(model: Model, f: Filters, rules: BusinessRules["complaints"] = getRules().complaints): ComplaintSummary {
+  const SPIKE_RULE = spikeRule(rules);
   const asOf = asOfDate(model, f);
   const inPeriod = filterComplaints(model, f);
   const allDims = filterComplaints(model, f, { ignoreDates: true });

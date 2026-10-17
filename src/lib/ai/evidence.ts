@@ -22,6 +22,7 @@ import { backtestAndForecast, METHOD_LABELS } from "../analytics/forecast";
 import { formatDays, formatMonth, formatNumber, formatPKR, formatPct, formatPeriod, formatSignedPct } from "../analytics/format";
 import { checkBundleConsistency } from "../data/validate";
 import type { AnalysisId, EvidenceItem, EvidencePacket } from "./types";
+import { getSettings } from "../settings";
 
 type Unit = EvidenceItem["unit"];
 
@@ -66,10 +67,10 @@ function defaultDisplay(v: number | null, unit: Unit): string {
   }
 }
 
+export const SAMPLE_LIMITATION = "The dataset is synthetic (a fictional tile business); results demonstrate the method, not real market behaviour.";
+
 export const STANDING_LIMITATIONS = [
-  "The dataset is synthetic (a fictional tile business); results demonstrate the method, not real market behaviour.",
   "Costs are estimated standard costs, so gross profit and margin are estimates.",
-  "Each invoice has a single payment record; real ERP data may hold several partial payments.",
   "Targets exist by region and month only.",
 ];
 
@@ -82,7 +83,8 @@ export function buildEvidence(
 ): EvidencePacket {
   const b = new EvidenceBuilder();
   const k = computeKpis(model, f);
-  const limitations = [...STANDING_LIMITATIONS];
+  const limitations = [...(model.bundle.source === "sample" ? [SAMPLE_LIMITATION] : []), ...STANDING_LIMITATIONS];
+  if (!model.hasPaymentsFile) limitations.push("Each invoice carries a single payment record; load a payments file to track several partial payments.");
 
   for (const a of analyses) {
     b.section(a);
@@ -193,11 +195,15 @@ export function buildEvidence(
       }
       case "distributor_attention": {
         const profiles = customerProfiles(model, f);
-        const dist = profiles.filter((p) => p.customer_type === "Distributor");
+        const partner = getSettings().partnerType;
+        const partnerMatch = (t: string) => t.toLowerCase() === partner.toLowerCase();
+        const hasPartners = profiles.some((p) => partnerMatch(p.customer_type));
+        const partnerLabel = hasPartners ? `${partner}s` : "Customers";
+        const dist = hasPartners ? profiles.filter((p) => partnerMatch(p.customer_type)) : profiles;
         const bands = ["Healthy", "Watch", "Needs attention", "Insufficient data"] as const;
-        for (const band of bands) b.add(`health.dist.${band}`, `Distributors in band "${band}"`, dist.filter((p) => p.healthBand === band).length, "count");
+        for (const band of bands) b.add(`health.dist.${band}`, `${partnerLabel} in band "${band}"`, dist.filter((p) => p.healthBand === band).length, "count");
         b.text("health.method", "How the health score works", "Rule-based: starts at 100 and deducts points for overdue share, oldest overdue invoice, order recency vs the account's usual rhythm, sales trend, credit use and open high-severity complaints. Not a validated prediction.");
-        for (const p of accountsNeedingAttention(profiles, "Distributor").slice(0, 5)) {
+        for (const p of accountsNeedingAttention(profiles, hasPartners ? dist[0]?.customer_type : undefined).slice(0, 5)) {
           b.add(
             `health.cust.${p.customer_id}`,
             `${p.customer_name} (${p.region}) health score`,
@@ -303,7 +309,14 @@ export function buildEvidence(
     analyses,
     period: k.period,
     filtersDescription: describeFilters(f),
-    dataSource: model.bundle.source === "sample" ? "Bundled synthetic sample data (fictional company)" : "User-uploaded CSV files",
+    dataSource:
+      model.bundle.source === "sample"
+        ? "Bundled synthetic sample data (fictional company)"
+        : model.bundle.source === "pipeline"
+          ? "Company data loaded by the data pipeline"
+          : "Company data uploaded as CSV files",
+    currency: getSettings().currency,
+    industry: getSettings().industry,
     items: b.items,
     limitations: [...new Set(limitations)].slice(0, 15),
   };

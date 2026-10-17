@@ -61,8 +61,8 @@ export function detectSalesAnomalies(model: Model, f: Filters): Anomaly[] {
     }
     s.values[i] += v;
   };
-  for (const o of model.bundle.orders) {
-    if (o.order_status !== "Delivered" || o.order_date > f.end || !matchesDims(f, o)) continue;
+  for (const o of model.orders) {
+    if (o.order_date > f.end || !matchesDims(f, o)) continue;
     const i = idx.get(monthKey(o.order_date));
     if (i === undefined) continue;
     add("product", o.product_id, o.product_name, i, o.net_sales_pkr);

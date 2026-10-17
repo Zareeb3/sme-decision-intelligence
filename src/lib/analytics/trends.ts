@@ -1,7 +1,8 @@
 /**
  * Monthly and quarterly time series for charts and diagnostics.
  */
-import { inRange, monthKey, monthsBetween, quarterKey } from "./dates";
+import { fiscalQuarterKey, inRange, monthKey, monthsBetween } from "./dates";
+import { getSettings } from "../settings";
 import { filterInvoicesByDims, filterOrders, sumTargets, targetsApplicable, type Filters } from "./filters";
 import { monthEnd, monthStart } from "./dates";
 import type { Model } from "./model";
@@ -30,12 +31,14 @@ export function monthlySeries(model: Model, f: Filters): PeriodPoint[] {
     if (!p) continue;
     p.netSales += o.net_sales_pkr;
     p.estGrossProfit += o.net_sales_pkr - o.est_cogs_pkr;
-    p.orders += 1;
+    if (o.order_status === "Delivered") p.orders += 1;
   }
   for (const inv of filterInvoicesByDims(model, f)) {
-    if (!inv.payment_date || !inRange(inv.payment_date, f.start, f.end)) continue;
-    const p = map.get(monthKey(inv.payment_date));
-    if (p) p.collections += inv.amount_paid_pkr;
+    for (const pay of inv.payments) {
+      if (pay.type !== "Payment" || !inRange(pay.date, f.start, f.end)) continue;
+      const p = map.get(monthKey(pay.date));
+      if (p) p.collections += pay.amount;
+    }
   }
   const withTargets = targetsApplicable(f) && model.bundle.targets.length > 0;
   for (const p of map.values()) {
@@ -55,7 +58,7 @@ export function monthlySeries(model: Model, f: Filters): PeriodPoint[] {
 export function quarterlySeries(model: Model, f: Filters): PeriodPoint[] {
   const out = new Map<string, PeriodPoint>();
   for (const m of monthlySeries(model, f)) {
-    const q = quarterKey(`${m.period}-01`);
+    const q = fiscalQuarterKey(`${m.period}-01`, getSettings().fiscalYearStartMonth);
     const p = out.get(q) ?? {
       period: q,
       netSales: 0,

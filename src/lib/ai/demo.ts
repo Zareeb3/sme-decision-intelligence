@@ -124,11 +124,12 @@ export function demoExplain(packet: EvidencePacket): AnalystResponse {
       }
       case "distributor_attention": {
         const att = get('health.dist.Needs attention'), watch = get("health.dist.Watch"), ok = get("health.dist.Healthy");
-        fact(`Among distributors, ${att?.display} are in "Needs attention", ${watch?.display} in "Watch" and ${ok?.display} are "Healthy" under the rule-based score.`, att, watch, ok);
+        const group = (att?.label.split(" in band")[0] ?? "Customers").toLowerCase();
+        fact(`Among ${group}, ${att?.display} are in "Needs attention", ${watch?.display} in "Watch" and ${ok?.display} are "Healthy" under the rule-based score.`, att, watch, ok);
         const list = withPrefix("health.cust.");
         for (const c of list.slice(0, 3)) fact(`${c.label.replace(" health score", "")}: ${c.display}.`, c);
         if (list.length) recs.push({ action: `Hold account reviews with ${list.slice(0, 3).map((c) => c.label.split(" (")[0]).join(", ")}.`, rationale: "They have the lowest health scores; the listed rule deductions show what to discuss.", evidence_ids: list.slice(0, 3).map((c) => c.id), priority: "high" });
-        summary.push(`${att?.display} distributor(s) need attention under transparent business rules.`);
+        summary.push(`${att?.display} of the ${group} need attention under transparent business rules.`);
         unc.push("The health score is a set of business rules, not a validated prediction of default or churn.");
         break;
       }

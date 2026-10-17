@@ -1,18 +1,28 @@
 /**
- * Display formatting. Amounts are shown in PKR with M (million) / B (billion)
- * suffixes so they read naturally for both local and international audiences.
+ * Display formatting. Amounts are shown in the company's currency with
+ * K / M / B suffixes so they read naturally for local and international audiences.
  */
+import { getSettings } from "../settings";
 
-export function formatPKR(n: number | null | undefined, opts: { precise?: boolean } = {}): string {
+/** ISO code of the reporting currency, e.g. "PKR". */
+export function currencyCode(): string {
+  return getSettings().currency;
+}
+
+export function formatMoney(n: number | null | undefined, opts: { precise?: boolean } = {}): string {
   if (n === null || n === undefined || !Number.isFinite(n)) return "—";
+  const c = currencyCode();
   const sign = n < 0 ? "−" : "";
   const a = Math.abs(n);
-  if (opts.precise) return `${sign}PKR ${Math.round(a).toLocaleString("en-US")}`;
-  if (a >= 1e9) return `${sign}PKR ${(a / 1e9).toFixed(2)}B`;
-  if (a >= 1e6) return `${sign}PKR ${(a / 1e6).toFixed(1)}M`;
-  if (a >= 1e3) return `${sign}PKR ${(a / 1e3).toFixed(0)}K`;
-  return `${sign}PKR ${a.toFixed(0)}`;
+  if (opts.precise) return `${sign}${c} ${Math.round(a).toLocaleString("en-US")}`;
+  if (a >= 1e9) return `${sign}${c} ${(a / 1e9).toFixed(2)}B`;
+  if (a >= 1e6) return `${sign}${c} ${(a / 1e6).toFixed(1)}M`;
+  if (a >= 1e3) return `${sign}${c} ${(a / 1e3).toFixed(0)}K`;
+  return `${sign}${c} ${a.toFixed(0)}`;
 }
+
+/** Kept for compatibility: formats in the active currency (PKR by default). */
+export const formatPKR = formatMoney;
 
 /** Compact axis labels for charts: 950M, 1.2B */
 export function formatCompact(n: number): string {

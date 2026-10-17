@@ -6,7 +6,7 @@ import { Badge, DataTable, Delta, PageHeader, Panel, ShareBar } from "../ui";
 import { ForecastChart, MarginChart, SalesCollectionsChart } from "../charts";
 import { monthlySeries, quarterlySeries } from "@/lib/analytics/trends";
 import { breakdown, type Dimension } from "@/lib/analytics/breakdowns";
-import { productPerformance, PRODUCT_FLAG_RULES } from "@/lib/analytics/products";
+import { productPerformance, productFlagRules } from "@/lib/analytics/products";
 import { ANOMALY_THRESHOLD, detectSalesAnomalies } from "@/lib/analytics/anomalies";
 import { backtestAndForecast, METHOD_LABELS } from "@/lib/analytics/forecast";
 import { formatMonth, formatPKR, formatPct, formatPeriod } from "@/lib/analytics/format";
@@ -64,6 +64,7 @@ export function SalesView() {
   const rows = useMemo(() => (ready ? breakdown(ready.model, ready.filters, dim) : []), [ready, dim]);
   if (!ready || !data) return null;
   const series = grain === "month" ? data.monthly : data.quarterly;
+  const PRODUCT_FLAG_RULES = productFlagRules(ready.settings.rules.products);
   const f = ready.filters;
 
   return (
@@ -113,13 +114,14 @@ export function SalesView() {
           rows={data.products.rows}
           rowKey={(r) => r.key}
           maxRows={20}
+          exportName={`products-${f.start}-${f.end}`}
           columns={[
-            { key: "p", header: "Product", render: (r) => <div><p className="font-medium">{r.label}</p><p className="text-[0.75rem] text-muted">{r.category}</p></div> },
-            { key: "ns", header: "Net sales", align: "right", render: (r) => formatPKR(r.netSales) },
-            { key: "ch", header: "Change", align: "right", render: (r) => <Delta value={r.changePct} /> },
-            { key: "m", header: "Est. margin", align: "right", render: (r) => formatPct(r.estGrossMarginPct) },
+            { key: "p", header: "Product", csv: (r) => r.label, render: (r) => <div><p className="font-medium">{r.label}</p><p className="text-[0.75rem] text-muted">{r.category}</p></div> },
+            { key: "ns", header: "Net sales", align: "right", csv: (r) => Math.round(r.netSales), render: (r) => formatPKR(r.netSales) },
+            { key: "ch", header: "Change", align: "right", csv: (r) => (r.changePct === null ? "" : r.changePct.toFixed(1)), render: (r) => <Delta value={r.changePct} /> },
+            { key: "m", header: "Est. margin", csv: (r) => (r.estGrossMarginPct === null ? "" : r.estGrossMarginPct.toFixed(1)), align: "right", render: (r) => formatPct(r.estGrossMarginPct) },
             { key: "mc", header: "Margin change", align: "right", render: (r) => <Delta value={r.marginChangePts} suffix=" pts" /> },
-            { key: "f", header: "Flags", render: (r) => <div className="flex flex-wrap gap-1">{r.flags.map((x) => <Badge key={x} tone="watch">{x}</Badge>)}</div> },
+            { key: "f", header: "Flags", csv: (r) => r.flags.join("; "), render: (r) => <div className="flex flex-wrap gap-1">{r.flags.map((x) => <Badge key={x} tone="watch">{x}</Badge>)}</div> },
           ]}
         />
       </Panel>

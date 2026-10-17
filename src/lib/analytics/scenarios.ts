@@ -10,6 +10,7 @@ import { computeKpis, type KpiSet } from "./kpis";
 import { breakdown } from "./breakdowns";
 import { filterOrders, type Filters } from "./filters";
 import type { Model } from "./model";
+import { formatMoney } from "./format";
 
 export interface ScenarioMetric {
   label: string;
@@ -49,7 +50,7 @@ export function collectionUpliftScenario(model: Model, f: Filters, pct: number, 
     id: "collection_uplift",
     title: `Collect an additional ${pct}% of overdue balances`,
     assumptions: [
-      `${pct}% of the overdue balance on ${k.period.asOf} (PKR ${Math.round(k.overdue).toLocaleString("en-US")}) is collected within the period.`,
+      `${pct}% of the overdue balance on ${k.period.asOf} (${formatMoney(k.overdue, { precise: true })}) is collected within the period.`,
       "No change in sales, new invoices or other payments.",
       "The reduction is applied to total balances; which specific invoices get paid is not modelled.",
     ],
@@ -150,7 +151,7 @@ export function mixShiftScenario(
     id: "mix_shift",
     title: `Shift ${sharePct}% of ${from} sales to ${to}`,
     assumptions: [
-      `${sharePct}% of ${from} net sales (PKR ${Math.round(moved).toLocaleString("en-US")}) is replaced by the same value of ${to} sales.`,
+      `${sharePct}% of ${from} net sales (${formatMoney(moved, { precise: true })}) is replaced by the same value of ${to} sales.`,
       `Each ${dimLabel} keeps its current estimated margin: ${from} ${srcM.toFixed(1)}%, ${to} ${dstM.toFixed(1)}%.`,
       "Total net sales are unchanged.",
     ],

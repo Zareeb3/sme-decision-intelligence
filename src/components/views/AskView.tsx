@@ -8,11 +8,12 @@ import { buildEvidence } from "@/lib/ai/evidence";
 import { demoExplain } from "@/lib/ai/demo";
 import { checkGrounding } from "@/lib/ai/grounding";
 import { ANALYSIS_LABELS, ANALYSIS_METHOD, type AskResult, type EvidencePacket } from "@/lib/ai/types";
+import { anonymisePacket, deanonymiseResponse } from "@/lib/ai/anonymise";
 import { describeFilters } from "@/lib/analytics/filters";
 
-const SUGGESTIONS = [
+const suggestions = (partner: string) => [
   "Why did sales increase while collections fell behind?",
-  "Which distributors may need attention?",
+  `Which ${partner.toLowerCase()}s may need attention?`,
   "Which accounts have significant overdue invoices?",
   "What could happen if collections improve by 10%?",
   "Which products show weak margins or unusual patterns?",
@@ -124,7 +125,9 @@ function Answer({ turn, onAsk }: { turn: Turn; onAsk: (q: string) => void }) {
                 )}
               </div>
               {r.notices.map((n) => (
-                <div key={n} className="mt-3"><Notice tone={r.mode === "demo" ? "watch" : "risk"}>{n}</Notice></div>
+                <div key={n} className="mt-3">
+                  <Notice tone={n.startsWith("Customer names were replaced") ? "primary" : r.mode === "demo" ? "watch" : "risk"}>{n}</Notice>
+                </div>
               ))}
 
               <p className="mt-4 text-[1rem] leading-relaxed text-ink">{r.response.summary}</p>
@@ -251,7 +254,8 @@ export function AskView() {
   }, []);
 
   if (!ready) return null;
-  const { model, filters } = ready;
+  const { model, filters, settings } = ready;
+  const SUGGESTIONS = suggestions(settings.partnerType);
 
   async function ask(q: string) {
     const text = q.trim();
@@ -259,6 +263,9 @@ export function AskView() {
     const route = routeQuestion(text, model);
     const f = { ...filters, ...route.filterOverrides };
     const packet = buildEvidence(model, f, text.slice(0, 500), route.analyses, { scenarioPct: route.scenarioPct });
+    // privacy option: customer names never leave the browser; aliases are swapped back in the answer
+    const anon = settings.anonymiseForAI ? anonymisePacket(packet, model.bundle.customers.map((c) => c.customer_name)) : { packet, aliases: new Map<string, string>() };
+    const outbound = anon.packet;
     const id = nextId.current++;
     setTurns((t) => [...t, { id, question: text, route, packet, result: null, error: null }]);
     setQuestion("");
@@ -267,17 +274,20 @@ export function AskView() {
     let result: AskResult | null = null;
     let error: string | null = null;
     const browserFallback = (why: string): AskResult => {
-      const response = demoExplain(packet);
-      return { mode: "demo", response, grounding: checkGrounding(response, packet), notices: [`${why} This demo-mode explanation was generated in the browser. No AI model was called.`] };
+      const response = demoExplain(outbound);
+      return { mode: "demo", response, grounding: checkGrounding(response, outbound), notices: [`${why} This demo-mode explanation was generated in the browser. No AI model was called.`] };
     };
     try {
-      const res = await fetch("/api/ask", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ packet }) });
+      const res = await fetch("/api/ask", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ packet: outbound }) });
       if (res.ok) result = (await res.json()) as AskResult;
       else if ([400, 413, 429].includes(res.status)) {
         error = ((await res.json().catch(() => null)) as { error?: string } | null)?.error ?? `The server returned HTTP ${res.status}.`;
       } else result = browserFallback(`The server returned HTTP ${res.status}.`);
     } catch {
       result = browserFallback("The server could not be reached.");
+    }
+    if (result && anon.aliases.size > 0) {
+      result = { ...result, response: deanonymiseResponse(result.response, anon.aliases), notices: [...result.notices, `Customer names were replaced with aliases before sending (${anon.aliases.size} name${anon.aliases.size > 1 ? "s" : ""}) and restored here.`] };
     }
     setTurns((t) => t.map((x) => (x.id === id ? { ...x, result, error } : x)));
   }

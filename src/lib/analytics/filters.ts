@@ -65,14 +65,12 @@ export function hasProductFilter(f: Filters): boolean {
   return f.categories.length > 0 || f.productIds.length > 0;
 }
 
-/** Delivered orders in the period that match the dimension filters. */
-export function filterOrders(model: Model, f: Filters, opts: { includeCancelled?: boolean } = {}): Order[] {
-  return model.bundle.orders.filter(
-    (o) =>
-      (opts.includeCancelled || o.order_status === "Delivered") &&
-      inRange(o.order_date, f.start, f.end) &&
-      matchesDims(f, o),
-  );
+/**
+ * Sales lines in the period that match the dimension filters: delivered lines
+ * plus credit notes (negative). Cancelled lines are never included.
+ */
+export function filterOrders(model: Model, f: Filters): Order[] {
+  return model.orders.filter((o) => inRange(o.order_date, f.start, f.end) && matchesDims(f, o));
 }
 
 /** Invoices matching dimension filters, regardless of date (callers apply date logic). */

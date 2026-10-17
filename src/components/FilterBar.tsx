@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useData } from "./DataProvider";
-import { monthEnd, monthsBetween, quarterKey } from "@/lib/analytics/dates";
+import { fiscalQuarterKey, fiscalYearOf, fiscalYearRange, monthEnd, monthsBetween } from "@/lib/analytics/dates";
 import { asOfDate, defaultFilters, type Filters } from "@/lib/analytics/filters";
 import { formatDate } from "@/lib/analytics/format";
 
@@ -45,29 +45,37 @@ function MultiSelect({ label, plural, options, selected, onChange }: { label: st
 }
 
 export function FilterBar() {
-  const { model, filters, setFilters, status } = useData();
+  const { model, filters, setFilters, status, settings } = useData();
   const [custom, setCustom] = useState(false);
 
+  const fy = settings.fiscalYearStartMonth;
   const presets = useMemo<Preset[]>(() => {
     if (!model) return [];
     const d = defaultFilters(model);
     const lastComplete = d.end;
     const months = monthsBetween(model.minDate, lastComplete);
-    const quarters = [...new Set(months.map((m) => quarterKey(`${m}-01`)))].reverse();
     const out: Preset[] = [{ id: "default", label: "Last 3 complete months", start: d.start, end: d.end }];
-    for (const q of quarters) {
-      const [y, qn] = q.split("-Q");
-      const sm = String((Number(qn) - 1) * 3 + 1).padStart(2, "0");
-      const em = String(Number(qn) * 3).padStart(2, "0");
-      const end = monthEnd(`${y}-${em}`);
-      if (end > lastComplete) continue;
-      out.push({ id: q, label: `Q${qn} ${y}`, start: `${y}-${sm}-01`, end });
+    // quarters (fiscal when the year does not start in January)
+    const quarters = new Map<string, { start: string; end: string }>();
+    for (const m of months) {
+      const q = fiscalQuarterKey(`${m}-01`, fy);
+      const cur = quarters.get(q);
+      quarters.set(q, { start: cur?.start ?? `${m}-01`, end: monthEnd(m) });
     }
-    const years = [...new Set(months.map((m) => m.slice(0, 4)))].reverse();
-    for (const y of years) out.push({ id: `Y${y}`, label: `${y}${`${y}-12-31` > lastComplete ? " to date" : ""}`, start: `${y}-01-01`, end: `${y}-12-31` > lastComplete ? lastComplete : `${y}-12-31` });
+    for (const [q, r] of [...quarters.entries()].reverse()) {
+      if (r.end > lastComplete || monthsBetween(r.start, r.end).length < 3) continue;
+      out.push({ id: q, label: q.replace("-", " "), start: r.start, end: r.end });
+    }
+    const years = [...new Set(months.map((m) => fiscalYearOf(`${m}-01`, fy)))].reverse();
+    for (const y of years) {
+      const r = fiscalYearRange(y, fy);
+      const start = r.start < model.minDate ? model.minDate : r.start;
+      const partial = r.end > lastComplete;
+      out.push({ id: `Y${y}`, label: `${fy === 1 ? y : `FY${y}`}${partial ? " to date" : ""}`, start, end: partial ? lastComplete : r.end });
+    }
     out.push({ id: "all", label: "All data", start: model.minDate, end: model.maxDate });
     return out;
-  }, [model]);
+  }, [model, fy]);
 
   if (status !== "ready" || !model || !filters.start) return null;
 
