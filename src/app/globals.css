@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens. The palette borrows from the product itself: porcelain
+ * surfaces, a deep glaze teal for primary actions, kiln ochre for "watch"
+ * states and iron-oxide red for risk. Colours carry meaning; they are not
+ * decoration.
+ */
+@theme {
+  --color-paper: #f4f6f5;
+  --color-surface: #ffffff;
+  --color-ink: #17212b;
+  --color-muted: #5a6571;
+  --color-faint: #8a949d;
+  --color-line: #dce2e0;
+  --color-line-strong: #c4ccc9;
+  --color-glaze: #1d6b74;
+  --color-glaze-deep: #134e55;
+  --color-glaze-soft: #e2efef;
+  --color-ochre: #a8701a;
+  --color-ochre-soft: #f7ecd9;
+  --color-oxide: #9f3a31;
+  --color-oxide-soft: #f6e3e0;
+  --color-celadon: #4f8a6e;
+  --color-celadon-soft: #e3f0e8;
+  --color-slate-chart: #7d8b96;
+
+  --font-sans: var(--font-plex), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+}
+
+html {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-glaze);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Native <details> popovers used for filters and metric definitions */
+details > summary {
+  list-style: none;
+  cursor: pointer;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

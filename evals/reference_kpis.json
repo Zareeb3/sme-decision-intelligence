@@ -1,0 +1,131 @@
+{
+  "q3_2026_all": {
+    "filters": {
+      "id": "q3_2026_all",
+      "start": "2026-07-01",
+      "end": "2026-09-30",
+      "regions": [],
+      "channels": []
+    },
+    "netSales": 928567583.0,
+    "estCogs": 682331721.0,
+    "estGrossMarginPct": 26.517818035868263,
+    "orderCount": 865,
+    "collections": 793970933.0,
+    "outstanding": 832698915.0,
+    "overdue": 213185246.0,
+    "aging": {
+      "Not yet due": 619513669.0,
+      "1–30 days": 142857771.0,
+      "31–60 days": 38405274.0,
+      "61–90 days": 4353231.0,
+      "90+ days": 27568970.0
+    },
+    "invoicesRaised": 882,
+    "invoicesFullyPaid": 389,
+    "top5SharePct": 31.853337163074325,
+    "hhi": 321.8280602235697,
+    "salesTarget": 804900000.0,
+    "collectionTarget": 843900000.0,
+    "openComplaints": 6
+  },
+  "q3_2026_south": {
+    "filters": {
+      "id": "q3_2026_south",
+      "start": "2026-07-01",
+      "end": "2026-09-30",
+      "regions": [
+        "South"
+      ],
+      "channels": []
+    },
+    "netSales": 295054366.0,
+    "estCogs": 221063692.0,
+    "estGrossMarginPct": 25.076962935027368,
+    "orderCount": 295,
+    "collections": 167104548.0,
+    "outstanding": 318750984.0,
+    "overdue": 117048013.0,
+    "aging": {
+      "Not yet due": 201702971.0,
+      "1–30 days": 64909576.0,
+      "31–60 days": 38057967.0,
+      "61–90 days": 4194388.0,
+      "90+ days": 9886082.0
+    },
+    "invoicesRaised": 302,
+    "invoicesFullyPaid": 126,
+    "top5SharePct": 50.82645481002643,
+    "hhi": 728.9753175688111,
+    "salesTarget": 232500000.0,
+    "collectionTarget": 273400000.0,
+    "openComplaints": 3
+  },
+  "fy2025_central_retail": {
+    "filters": {
+      "id": "fy2025_central_retail",
+      "start": "2025-01-01",
+      "end": "2025-12-31",
+      "regions": [
+        "Central"
+      ],
+      "channels": [
+        "Retail"
+      ]
+    },
+    "netSales": 216770901.0,
+    "estCogs": 138059482.0,
+    "estGrossMarginPct": 36.310878737363375,
+    "orderCount": 757,
+    "collections": 211504202.0,
+    "outstanding": 23262829.0,
+    "overdue": 5766319.0,
+    "aging": {
+      "Not yet due": 17496510.0,
+      "1–30 days": 4315072.0,
+      "31–60 days": 0.0,
+      "61–90 days": 0.0,
+      "90+ days": 1451247.0
+    },
+    "invoicesRaised": 756,
+    "invoicesFullyPaid": 663,
+    "top5SharePct": 42.77814760755181,
+    "hhi": 646.4670118064032,
+    "salesTarget": null,
+    "collectionTarget": null,
+    "openComplaints": 1
+  },
+  "h1_2025_north_west": {
+    "filters": {
+      "id": "h1_2025_north_west",
+      "start": "2025-01-01",
+      "end": "2025-06-30",
+      "regions": [
+        "North",
+        "West"
+      ],
+      "channels": []
+    },
+    "netSales": 284420253.0,
+    "estCogs": 190184981.0,
+    "estGrossMarginPct": 33.13240565888956,
+    "orderCount": 348,
+    "collections": 259292747.0,
+    "outstanding": 85891651.0,
+    "overdue": 18316672.0,
+    "aging": {
+      "Not yet due": 67574979.0,
+      "1–30 days": 12214832.0,
+      "31–60 days": 227021.0,
+      "61–90 days": 3114550.0,
+      "90+ days": 2760269.0
+    },
+    "invoicesRaised": 353,
+    "invoicesFullyPaid": 268,
+    "top5SharePct": 49.067269130092505,
+    "hhi": 688.9836366893857,
+    "salesTarget": 296900000.0,
+    "collectionTarget": 261900000.0,
+    "openComplaints": 2
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "name": "SME Decision Intelligence - approved actions",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sme-actions",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook: approved action",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "sme-actions"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.headers[\"x-webhook-secret\"]}}",
+              "value2": "={{$env.SME_WEBHOOK_SECRET}}"
+            }
+          ]
+        }
+      },
+      "name": "Secret matches?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json.body.action_type}}",
+        "rules": {
+          "rules": [
+            { "value2": "overdue_alert", "output": 0 },
+            { "value2": "follow_up_task", "output": 1 },
+            { "value2": "complaint_routing", "output": 2 },
+            { "value2": "management_summary", "output": 3 }
+          ]
+        }
+      },
+      "name": "Route by action type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [700, 280]
+    },
+    {
+      "parameters": {
+        "fromEmail": "alerts@example.com",
+        "toEmail": "credit-control@example.com",
+        "subject": "={{$json.body.title}}",
+        "text": "={{$json.body.reason}}\n\nCustomer: {{$json.body.payload.customer_name}} ({{$json.body.payload.customer_id}})\nOverdue: PKR {{$json.body.payload.overdue_pkr}}\nOldest invoice: {{$json.body.payload.oldest_days_past_due}} days past due\nAs of: {{$json.body.payload.as_of}}\n\nApproved by {{$json.body.approved_by}} at {{$json.body.sent_at}}."
+      },
+      "name": "Email credit control",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [960, 100]
+    },
+    {
+      "parameters": {},
+      "name": "Create follow-up task (replace with your task tool)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [960, 240]
+    },
+    {
+      "parameters": {
+        "fromEmail": "alerts@example.com",
+        "toEmail": "={{ {\"Quality\":\"quality@example.com\",\"Production\":\"production@example.com\",\"Logistics\":\"logistics@example.com\",\"Commercial\":\"commercial@example.com\"}[$json.body.payload.team] || \"operations@example.com\" }}",
+        "subject": "={{$json.body.title}}",
+        "text": "={{$json.body.reason}}\n\nComplaint: {{$json.body.payload.complaint_id}}\nProduct: {{$json.body.payload.product}}\nCategory: {{$json.body.payload.category}} ({{$json.body.payload.severity}})\nOrder: {{$json.body.payload.order_id}}\n\nApproved by {{$json.body.approved_by}}."
+      },
+      "name": "Email owning team",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [960, 380]
+    },
+    {
+      "parameters": {
+        "fromEmail": "alerts@example.com",
+        "toEmail": "management@example.com",
+        "subject": "=Management summary {{$json.body.payload.period}}",
+        "text": "=Net sales: {{$json.body.payload.net_sales}} ({{$json.body.payload.sales_attainment}} of target)\nCollections: {{$json.body.payload.collections}} ({{$json.body.payload.collection_attainment}} of target)\nEstimated gross margin: {{$json.body.payload.estimated_gross_margin}}\nOverdue: {{$json.body.payload.overdue}} ({{$json.body.payload.overdue_share}} of outstanding)\nOpen complaints: {{$json.body.payload.open_complaints}}\n\n{{$json.body.payload.note}}\nApproved by {{$json.body.approved_by}}."
+      },
+      "name": "Email management summary",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [960, 520]
+    },
+    {
+      "parameters": { "respondWith": "json", "responseBody": "={\"received\": true}", "options": {} },
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": { "respondWith": "json", "responseBody": "={\"received\": false}", "options": { "responseCode": 401 } },
+      "name": "Respond unauthorised",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [700, 480]
+    }
+  ],
+  "connections": {
+    "Webhook: approved action": { "main": [[{ "node": "Secret matches?", "type": "main", "index": 0 }]] },
+    "Secret matches?": {
+      "main": [
+        [{ "node": "Route by action type", "type": "main", "index": 0 }],
+        [{ "node": "Respond unauthorised", "type": "main", "index": 0 }]
+      ]
+    },
+    "Route by action type": {
+      "main": [
+        [{ "node": "Email credit control", "type": "main", "index": 0 }],
+        [{ "node": "Create follow-up task (replace with your task tool)", "type": "main", "index": 0 }],
+        [{ "node": "Email owning team", "type": "main", "index": 0 }],
+        [{ "node": "Email management summary", "type": "main", "index": 0 }]
+      ]
+    },
+    "Email credit control": { "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]] },
+    "Create follow-up task (replace with your task tool)": { "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]] },
+    "Email owning team": { "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]] },
+    "Email management summary": { "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]] }
+  },
+  "settings": {},
+  "active": false
+}

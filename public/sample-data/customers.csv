@@ -1,0 +1,121 @@
+customer_id,customer_name,customer_type,channel,region,city,payment_terms_days,credit_limit_pkr,onboarding_date,account_status
+C0001,Rehman Trading Co.,Distributor,Distribution,South,Hyderabad,60,32000000,2018-02-11,Active
+C0002,Qasim Enterprises,Distributor,Distribution,West,Multan,60,54000000,2025-09-27,Active
+C0003,Chenab Enterprises,Distributor,Distribution,North,Rawalpindi,60,47000000,2018-08-20,Active
+C0004,Khyber Distributors,Distributor,Distribution,North,Rawalpindi,60,53000000,2025-11-21,Active
+C0005,Rafiq Sales Corporation,Distributor,Distribution,South,Karachi,60,40000000,2021-07-10,Active
+C0006,Rafiq Distributors,Distributor,Distribution,South,Sukkur,60,44000000,2025-01-24,Active
+C0007,Galaxy Sales Corporation,Distributor,Distribution,South,Karachi,60,58000000,2021-06-10,Active
+C0008,Iqra Enterprises,Distributor,Distribution,North,Islamabad,60,41000000,2025-07-12,Active
+C0009,Usman Enterprises,Distributor,Distribution,Central,Gujranwala,60,47000000,2020-12-18,Active
+C0010,Rafiq Enterprises,Distributor,Distribution,Central,Gujranwala,60,53000000,2020-12-23,Active
+C0011,Haider Sales Corporation,Distributor,Distribution,Central,Lahore,60,53000000,2022-12-22,Active
+C0012,Kashmir Sales Corporation,Distributor,Distribution,South,Karachi,60,49000000,2020-09-24,Active
+C0013,Nishat Distributors,Distributor,Distribution,North,Peshawar,60,48000000,2025-01-03,Active
+C0014,Sadiq Sales Corporation,Distributor,Distribution,North,Abbottabad,60,52000000,2020-03-05,Active
+C0015,Zamzam Trading Co.,Distributor,Distribution,Central,Faisalabad,60,32000000,2017-04-10,Active
+C0016,Khyber Enterprises,Distributor,Distribution,West,Multan,60,57000000,2023-07-11,Active
+C0017,Margalla Sales Corporation,Distributor,Distribution,South,Karachi,60,52000000,2020-07-03,Active
+C0018,Sunrise Trading Co.,Distributor,Distribution,North,Rawalpindi,60,28000000,2024-04-21,Active
+C0019,Iqra Sales Corporation,Distributor,Distribution,South,Sukkur,60,57000000,2022-10-30,Active
+C0020,Gulshan Trading Co.,Distributor,Distribution,South,Karachi,60,38000000,2022-10-18,Active
+C0021,Pak Star Tile Gallery Hyderabad,Dealer,Retail,South,Hyderabad,30,4000000,2023-04-30,Active
+C0022,Iqra Tile House,Dealer,Retail,South,Sukkur,30,6000000,2022-02-20,Active
+C0023,Mehran Tiles & Sanitary,Dealer,Retail,North,Peshawar,30,6000000,2023-04-08,Inactive
+C0024,Sunrise Ceramics Centre Lahore,Dealer,Retail,Central,Lahore,30,7000000,2020-10-14,Active
+C0025,Rehman Tile House,Dealer,Retail,South,Hyderabad,30,5000000,2019-09-05,Active
+C0026,Kashmir Tiles & Sanitary,Dealer,Retail,North,Islamabad,30,6000000,2024-10-10,Active
+C0027,Classic Ceramics Centre,Dealer,Retail,South,Karachi,30,2000000,2025-04-30,Active
+C0028,Iqra Building Materials Abbottabad,Dealer,Retail,North,Abbottabad,30,4000000,2022-01-20,Active
+C0029,Nishat Ceramics Centre Multan,Dealer,Retail,West,Multan,30,5000000,2020-09-19,Active
+C0030,Bolan Tiles & Sanitary,Dealer,Retail,North,Peshawar,30,3000000,2025-12-21,Active
+C0031,Usman Building Materials Gujranwala,Dealer,Retail,Central,Gujranwala,30,5000000,2022-04-09,Active
+C0032,Indus Valley Building Materials Karachi,Dealer,Retail,South,Karachi,30,5000000,2024-05-18,Active
+C0033,Evergreen Ceramics Centre,Dealer,Retail,North,Rawalpindi,30,5000000,2018-06-15,Active
+C0034,Galaxy Tile House,Dealer,Retail,North,Rawalpindi,30,3000000,2024-06-05,Active
+C0035,Ravi Tile Gallery,Dealer,Retail,West,Quetta,30,7000000,2018-03-15,Active
+C0036,Saba Tiles & Sanitary,Dealer,Retail,North,Rawalpindi,30,7000000,2018-09-13,Active
+C0037,Faisal Tile House,Dealer,Retail,South,Karachi,30,2000000,2024-08-03,Active
+C0038,Qasim Tiles & Sanitary,Dealer,Retail,Central,Sialkot,30,7000000,2019-01-19,Active
+C0039,Kashmir Tile House,Dealer,Retail,Central,Sialkot,30,2000000,2026-01-19,Inactive
+C0040,Margalla Tiles & Sanitary Faisalabad,Dealer,Retail,Central,Faisalabad,30,7000000,2019-05-04,Active
+C0041,Hamza Tiles & Sanitary,Dealer,Retail,South,Sukkur,30,6000000,2023-10-01,Active
+C0042,Indus Valley Ceramics Centre,Dealer,Retail,Central,Faisalabad,30,2000000,2017-08-24,Active
+C0043,Saba Tile Gallery Hyderabad,Dealer,Retail,South,Hyderabad,30,5000000,2026-01-12,Active
+C0044,Evergreen Tiles & Sanitary Hyderabad,Dealer,Retail,South,Hyderabad,30,4000000,2018-11-09,Active
+C0045,Unique Building Materials,Dealer,Retail,South,Karachi,30,7000000,2018-06-25,Active
+C0046,Bolan Tile Gallery,Dealer,Retail,Central,Lahore,30,3000000,2020-10-15,Active
+C0047,Royal Building Materials,Dealer,Retail,South,Sukkur,30,7000000,2019-11-04,Active
+C0048,Prime Tile Gallery,Dealer,Retail,South,Hyderabad,30,3000000,2020-04-30,Inactive
+C0049,Sunrise Tile Gallery Sukkur,Dealer,Retail,South,Sukkur,30,4000000,2023-03-17,Active
+C0050,Saba Tile House Karachi,Dealer,Retail,South,Karachi,30,7000000,2017-09-24,Active
+C0051,Ravi Ceramics Centre Gujranwala,Dealer,Retail,Central,Gujranwala,30,3000000,2024-06-29,Active
+C0052,Bismillah Ceramics Centre,Dealer,Retail,Central,Faisalabad,30,7000000,2019-04-26,Active
+C0053,Kashmir Tile Gallery Bahawalpur,Dealer,Retail,West,Bahawalpur,30,3000000,2020-08-02,Inactive
+C0054,Nishat Tile Gallery Gujranwala,Dealer,Retail,Central,Gujranwala,30,7000000,2021-02-07,Active
+C0055,Crescent Tile Gallery Gujranwala,Dealer,Retail,Central,Gujranwala,30,7000000,2026-01-12,Active
+C0056,Khyber Tile Gallery,Dealer,Retail,West,Dera Ghazi Khan,30,6000000,2020-01-01,Active
+C0057,Margalla Tile Gallery,Dealer,Retail,South,Sukkur,30,7000000,2020-04-17,Active
+C0058,Haider Building Materials Rawalpindi,Dealer,Retail,North,Rawalpindi,30,2000000,2023-07-05,Active
+C0059,Khyber Tile House,Dealer,Retail,North,Peshawar,30,4000000,2021-06-08,Active
+C0060,Usman Tile Gallery,Dealer,Retail,South,Hyderabad,30,3000000,2018-09-17,Active
+C0061,Usman Tile House,Dealer,Retail,West,Quetta,30,2000000,2018-06-25,Active
+C0062,Shaheen Tile House,Dealer,Retail,South,Karachi,30,7000000,2025-11-23,Active
+C0063,Kohinoor Building Materials Gujranwala,Dealer,Retail,Central,Gujranwala,30,7000000,2026-01-20,Active
+C0064,Hamza Ceramics Centre,Dealer,Retail,South,Sukkur,30,6000000,2017-03-07,Active
+C0065,Bismillah Tiles & Sanitary,Dealer,Retail,Central,Gujranwala,30,2000000,2023-04-12,Active
+C0066,Gulshan Ceramics Centre,Dealer,Retail,North,Peshawar,30,6000000,2018-12-31,Inactive
+C0067,Bismillah Tiles & Sanitary Islamabad,Dealer,Retail,North,Islamabad,30,2000000,2025-08-08,Active
+C0068,Hamza Tile Gallery,Dealer,Retail,South,Sukkur,30,6000000,2018-09-07,Active
+C0069,Sadiq Tile House,Dealer,Retail,South,Sukkur,30,3000000,2020-04-27,Active
+C0070,Unique Ceramics Centre,Dealer,Retail,Central,Lahore,30,3000000,2020-12-16,Active
+C0071,Pak Star Building Materials,Dealer,Retail,West,Bahawalpur,30,4000000,2022-12-22,Active
+C0072,Prime Ceramics Centre,Dealer,Retail,South,Sukkur,30,2000000,2023-02-13,Active
+C0073,Shaheen Building Materials Karachi,Dealer,Retail,South,Karachi,30,4000000,2023-04-10,Active
+C0074,Rehman Ceramics Centre,Dealer,Retail,Central,Sialkot,30,7000000,2024-11-27,Inactive
+C0075,Bolan Building Materials Bahawalpur,Dealer,Retail,West,Bahawalpur,30,2000000,2018-04-05,Active
+C0076,Kohinoor Tiles & Sanitary,Dealer,Retail,South,Hyderabad,30,2000000,2018-01-30,Active
+C0077,Kashmir Tile Gallery,Dealer,Retail,Central,Sialkot,30,7000000,2022-07-31,Active
+C0078,Ravi Tiles & Sanitary,Dealer,Retail,Central,Lahore,30,6000000,2017-04-17,Active
+C0079,Madina Building Materials,Dealer,Retail,West,Multan,30,7000000,2018-07-03,Active
+C0080,Rehman Tiles & Sanitary Sukkur,Dealer,Retail,South,Sukkur,30,2000000,2023-02-25,Active
+C0081,Sadiq Tiles & Sanitary Hyderabad,Dealer,Retail,South,Hyderabad,30,2000000,2018-03-01,Active
+C0082,Crescent Building Materials,Dealer,Retail,Central,Lahore,30,2000000,2025-05-15,Active
+C0083,Sutlej Tile Gallery,Dealer,Retail,Central,Gujranwala,30,6000000,2024-06-12,Active
+C0084,Mehran Building Materials,Dealer,Retail,West,Multan,30,2000000,2020-11-25,Active
+C0085,Haider Ceramics Centre Faisalabad,Dealer,Retail,Central,Faisalabad,30,6000000,2017-07-23,Active
+C0086,Margalla Tiles & Sanitary Rawalpindi,Dealer,Retail,North,Rawalpindi,30,3000000,2017-07-05,Active
+C0087,Kohinoor Ceramics Centre,Dealer,Retail,North,Abbottabad,30,7000000,2019-08-18,Active
+C0088,Kohinoor Tile House Karachi,Dealer,Retail,South,Karachi,30,4000000,2021-11-25,Active
+C0089,Nishat Tile House,Dealer,Retail,Central,Lahore,30,5000000,2020-02-04,Active
+C0090,Khyber Building Materials,Dealer,Retail,Central,Gujranwala,30,4000000,2022-08-03,Active
+C0091,Tariq Homes,Key Account,Projects,North,Abbottabad,45,40000000,2018-12-09,Active
+C0092,Mehran Homes,Key Account,Projects,North,Peshawar,45,40000000,2020-05-29,Active
+C0093,Madina Homes Lahore,Key Account,Projects,Central,Lahore,45,31000000,2018-03-24,Active
+C0094,Qasim Developers,Key Account,Projects,Central,Faisalabad,45,15000000,2017-10-25,Active
+C0095,Pak Star Constructions,Key Account,Projects,West,Quetta,45,25000000,2025-02-25,Active
+C0096,Classic Developers,Key Account,Projects,West,Multan,45,19000000,2018-09-12,Active
+C0097,Unique Constructions Peshawar,Key Account,Projects,North,Peshawar,45,21000000,2019-05-10,Active
+C0098,Ravi Developers,Key Account,Projects,Central,Gujranwala,45,21000000,2018-04-07,Active
+C0099,Usman Builders,Key Account,Projects,West,Dera Ghazi Khan,45,40000000,2024-11-28,Active
+C0100,Gulshan Developers Abbottabad,Key Account,Projects,North,Abbottabad,45,20000000,2021-11-06,Active
+C0101,Khyber Builders,Key Account,Projects,Central,Gujranwala,45,36000000,2021-12-11,Active
+C0102,Mehran Builders,Key Account,Projects,Central,Faisalabad,45,34000000,2018-02-22,Active
+C0103,Rafiq Constructions,Key Account,Projects,South,Sukkur,45,41000000,2023-07-12,Active
+C0104,Zamzam Developers,Key Account,Projects,West,Quetta,45,40000000,2019-04-05,On Hold
+C0105,Bismillah Builders,Key Account,Projects,West,Quetta,45,40000000,2018-03-03,Active
+C0106,Al-Noor Developers,Key Account,Projects,Central,Gujranwala,45,33000000,2019-09-01,Active
+C0107,Chenab Developers,Key Account,Projects,North,Rawalpindi,45,27000000,2023-10-02,On Hold
+C0108,Nishat Builders Karachi,Key Account,Projects,South,Karachi,45,36000000,2022-10-08,Active
+C0109,Kohinoor Commercial Tower,Institutional,Projects,West,Dera Ghazi Khan,90,69000000,2020-09-09,Active
+C0110,Bolan Commercial Tower,Institutional,Projects,South,Sukkur,90,76000000,2019-09-15,Active
+C0111,Qasim Commercial Tower,Institutional,Projects,Central,Gujranwala,90,87000000,2020-12-10,Active
+C0112,Indus Valley Commercial Tower,Institutional,Projects,West,Bahawalpur,90,47000000,2022-11-17,Active
+C0113,Zamzam Housing Project,Institutional,Projects,South,Hyderabad,90,76000000,2025-02-25,Active
+C0114,Classic Commercial Tower,Institutional,Projects,North,Abbottabad,90,44000000,2020-10-10,Active
+C0115,Sadiq Housing Project,Institutional,Projects,South,Hyderabad,90,63000000,2022-06-02,Active
+C0116,Sunrise Housing Project,Institutional,Projects,West,Quetta,90,87000000,2023-09-02,Active
+C0117,Unique University Campus,Institutional,Projects,Central,Lahore,90,72000000,2018-10-06,Active
+C0118,Qasim Hospital Project,Institutional,Projects,West,Bahawalpur,90,44000000,2025-12-30,Active
+C0119,Royal Hospital Project,Institutional,Projects,South,Karachi,90,45000000,2023-11-21,Active
+C0120,Rafiq Hospital Project,Institutional,Projects,Central,Gujranwala,90,83000000,2019-03-10,Active

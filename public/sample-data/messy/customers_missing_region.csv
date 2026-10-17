@@ -1,0 +1,21 @@
+customer_id,customer_name,customer_type,channel,city,payment_terms_days,credit_limit_pkr,onboarding_date,account_status
+C0001,Rehman Trading Co.,Distributor,Distribution,Hyderabad,60,32000000,2018-02-11,Active
+C0002,Qasim Enterprises,Distributor,Distribution,Multan,60,54000000,2025-09-27,Active
+C0003,Chenab Enterprises,Distributor,Distribution,Rawalpindi,60,47000000,2018-08-20,Active
+C0004,Khyber Distributors,Distributor,Distribution,Rawalpindi,60,53000000,2025-11-21,Active
+C0005,Rafiq Sales Corporation,Distributor,Distribution,Karachi,60,40000000,2021-07-10,Active
+C0006,Rafiq Distributors,Distributor,Distribution,Sukkur,60,44000000,2025-01-24,Active
+C0007,Galaxy Sales Corporation,Distributor,Distribution,Karachi,60,58000000,2021-06-10,Active
+C0008,Iqra Enterprises,Distributor,Distribution,Islamabad,60,41000000,2025-07-12,Active
+C0009,Usman Enterprises,Distributor,Distribution,Gujranwala,60,47000000,2020-12-18,Active
+C0010,Rafiq Enterprises,Distributor,Distribution,Gujranwala,60,53000000,2020-12-23,Active
+C0011,Haider Sales Corporation,Distributor,Distribution,Lahore,60,53000000,2022-12-22,Active
+C0012,Kashmir Sales Corporation,Distributor,Distribution,Karachi,60,49000000,2020-09-24,Active
+C0013,Nishat Distributors,Distributor,Distribution,Peshawar,60,48000000,2025-01-03,Active
+C0014,Sadiq Sales Corporation,Distributor,Distribution,Abbottabad,60,52000000,2020-03-05,Active
+C0015,Zamzam Trading Co.,Distributor,Distribution,Faisalabad,60,32000000,2017-04-10,Active
+C0016,Khyber Enterprises,Distributor,Distribution,Multan,60,57000000,2023-07-11,Active
+C0017,Margalla Sales Corporation,Distributor,Distribution,Karachi,60,52000000,2020-07-03,Active
+C0018,Sunrise Trading Co.,Distributor,Distribution,Rawalpindi,60,28000000,2024-04-21,Active
+C0019,Iqra Sales Corporation,Distributor,Distribution,Sukkur,60,57000000,2022-10-30,Active
+C0020,Gulshan Trading Co.,Distributor,Distribution,Karachi,60,38000000,2022-10-18,Active

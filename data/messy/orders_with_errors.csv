@@ -1,0 +1,42 @@
+order_id,order_date,customer_id,region,channel,product_id,product_name,product_category,quantity_sqm,list_price_per_sqm,discount_pct,net_sales_pkr,est_unit_cost_per_sqm,est_cogs_pkr,order_status
+SO000001,2024-01-01,C0010,Central,Distribution,P020,Ceramic Floor 30x30 Anti-Slip Beige,Ceramic Floor,720,1828.43,10.91,1172822.0,1188.0,855360.0,Delivered
+SO000002,2024-01-01,C0042,Central,Retail,P010,Porcelain 60x60 Matt Charcoal,Porcelain Floor,130,3406.25,4.84,421378.0,2173.5,282555.0,Delivered
+SO000003,2024-01-01,C0052,Central,Retail,P004,Ceramic Floor 45x45 Wood Look,Ceramic Floor,140,2236.93,4.05,300491.0,1417.5,198450.0,Delivered
+SO000004,2025-13-45,C0075,West,Retail,P014,GVT 60x120 Statuario,Glazed Vitrified (GVT),70,6882.61,4.78,458751.0,3933.0,275310.0,Delivered
+SO000005,2024-01-01,C0081,South,Retail,P007,Wall Tile 30x60 Satin Ivory,Wall Tiles,140,2300.34,5.91,303003.0,1403.0,196420.0,Delivered
+SO000006,2024-01-01,C0119,South,Projects,P010,Porcelain 60x60 Matt Charcoal,Porcelain Floor,-120,3466.48,13.72,2123403.0,2173.5,1543185.0,Delivered
+SO000007,2024-01-02,C0022,South,Retail,P009,Porcelain 60x60 Polished Beige,Porcelain Floor,60,3584.19,5.32,203601.0,2304.0,138240.0,Delivered
+SO000008,2024-01-02,C0065,Central,Retail,P007,Wall Tile 30x60 Satin Ivory,Wall Tiles,60,2300.75,4.66,,1403.0,84180.0,Delivered
+SO000009,2024-01-02,C0069,South,Retail,P015,GVT 60x60 Onyx Blue,Glazed Vitrified (GVT),100,5041.52,4.25,482717.0,3068.0,306800.0,Delivered
+SO000010,2024-01-03,C9999,South,Retail,P008,Wall Tile 30x60 Bathroom Marble,Wall Tiles,140,2489.74,4.19,333953.0,1500.0,210000.0,Delivered
+SO000011,2024-01-03,C0044,South,Retail,P013,GVT 60x120 Marble Glossy,Glazed Vitrified (GVT),130,6340.46,5.62,777947.0,3712.0,482560.0,Delivered
+SO000012,2024-01-03,C0086,North,Retail,P001,Ceramic Floor 30x30 Matt Grey,Ceramic Floor,140,1746.57,3.12,236894.0,1155.0,161700.0,Delivered
+SO000013,2024-01-04,C0009,Central,Distribution,P002,Ceramic Floor 40x40 Rustic Brown,Ceramic Floor,630,1918.94,8.77,1102905.0,1267.5,798525.0,Delivered
+SO000014,2024-01-04,C0012,South,Distribution,P013,GVT 60x120 Marble Glossy,Glazed Vitrified (GVT),960,6351.23,9.54,5515423.0,3712.0,3563520.0,Delivered
+SO000015,2024-01-04,C0023,North,Retail,P007,Wall Tile 30x60 Satin Ivory,Wall Tiles,40,2318.51,5.51,87627.0,1403.0,56120.0,Delivered
+SO000016,2024-01-04,C0031,Central,Retail,P006,Wall Tile 25x40 Kitchen Decor,Wall Tiles,40,1879.36,5.34,71160.0,1140.0,45600.0,Delivered
+SO000017,2024-01-04,C0038,Central,Retail,P020,Ceramic Floor 30x30 Anti-Slip Beige,Ceramic Floor,90,1820.18,4.27,156829.0,1188.0,106920.0,Delivered
+SO000018,2024-01-04,C0041,South,Retail,P002,Ceramic Floor 40x40 Rustic Brown,Ceramic Floor,140,1942.38,3.59,262163.0,1267.5,177450.0,Delivered
+SO000019,2024-01-04,C0044,South,Retail,P005,Wall Tile 25x40 Glossy White,Wall Tiles,80,1648.27,4.82,125507.0,1023.0,81840.0,Delivered
+SO000020,2024-01-04,C0047,South,Retail,P005,Wall Tile 25x40 Glossy White,Wall Tiles,60,1651.3,5.83,93300.0,1023.0,61380.0,Delivered
+SO000021,2024-01-04,C0048,South,Retail,P003,Ceramic Floor 40x40 Glossy White,Ceramic Floor,120,2072.23,5.19,235774.0,1312.0,157440.0,Delivered
+SO000022,2024-01-04,C0049,South,Retail,P016,GVT 80x160 Calacatta Slab,Glazed Vitrified (GVT),60,8539.91,4.15,491139.0,4816.0,288960.0,Delivered
+SO000023,2024-01-04,C0060,South,Retail,P012,Porcelain 80x80 Polished Ivory,Porcelain Floor,40,4604.39,4.44,175989.0,2806.0,112240.0,Delivered
+SO000024,2024-01-04,C0065,Central,Retail,P005,Wall Tile 25x40 Glossy White,Wall Tiles,50,1653.82,3.83,79528.0,1023.0,51150.0,Delivered
+SO000025,2024-01-04,C0076,South,Retail,P002,Ceramic Floor 40x40 Rustic Brown,Ceramic Floor,120,1960.63,3.07,228061.0,1267.5,152100.0,Delivered
+SO000026,2024-01-04,C0085,Central,Retail,P006,Wall Tile 25x40 Kitchen Decor,Wall Tiles,130,1912.55,3.64,239577.0,1140.0,148200.0,Delivered
+SO000027,2024-01-04,C0086,North,Retail,P003,Ceramic Floor 40x40 Glossy White,Ceramic Floor,90,2043.67,3.53,177430.0,1312.0,118080.0,Delivered
+SO000028,2024-01-04,C0092,North,Projects,P009,Porcelain 60x60 Polished Beige,Porcelain Floor,580,3624.39,12.21,1845405.0,2304.0,1336320.0,Delivered
+SO000029,2024-01-05,C0001,South,Distribution,P009,Porcelain 60x60 Polished Beige,Porcelain Floor,880,3604.36,11.63,2803007.0,2304.0,2027520.0,Delivered
+SO000030,2024-01-05,C0068,South,Retail,P003,Ceramic Floor 40x40 Glossy White,Ceramic Floor,130,2038.63,3.6,255471.0,1312.0,170560.0,Delivered
+SO000031,2024-01-05,C0080,South,Retail,P007,Wall Tile 30x60 Satin Ivory,Wall Tiles,150,2315.15,3.39,335491.0,1403.0,210450.0,Delivered
+SO000032,2024-01-06,C0005,South,Distribution,P007,Wall Tile 30x60 Satin Ivory,Wall Tiles,1050,2315.58,9.29,2205514.0,1403.0,1473150.0,Delivered
+SO000033,2024-01-06,C0011,Central,Distribution,P006,Wall Tile 25x40 Kitchen Decor,Wall Tiles,1000,1927.99,11.49,1706433.0,1140.0,1140000.0,Delivered
+SO000034,2024-01-06,C0012,South,Distribution,P008,Wall Tile 30x60 Bathroom Marble,Wall Tiles,570,2521.37,10.71,1283306.0,1500.0,855000.0,Delivered
+SO000035,2024-01-06,C0041,South,Retail,P008,Wall Tile 30x60 Bathroom Marble,Wall Tiles,130,2508.25,5.12,309363.0,1500.0,195000.0,Delivered
+SO000036,2024-01-06,C0042,Central,Retail,P005,Wall Tile 25x40 Glossy White,Wall Tiles,60,1651.12,4.32,94791.0,1023.0,61380.0,Delivered
+SO000037,2024-01-06,C0047,South,Retail,P005,Wall Tile 25x40 Glossy White,Wall Tiles,120,1646.41,5.41,186884.0,1023.0,122760.0,Delivered
+SO000038,2024-01-06,C0048,South,Retail,P016,GVT 80x160 Calacatta Slab,Glazed Vitrified (GVT),90,8473.48,5.46,720963.0,4816.0,433440.0,Delivered
+SO000039,2024-01-06,C0056,West,Retail,P006,Wall Tile 25x40 Kitchen Decor,Wall Tiles,80,1896.4,5.39,143535.0,1140.0,91200.0,Delivered
+SO000040,2024-01-06,C0065,Central,Retail,P008,Wall Tile 30x60 Bathroom Marble,Wall Tiles,90,2505.49,4.22,215967.0,1500.0,135000.0,Delivered
+SO000012,2024-01-03,C0086,North,Retail,P001,Ceramic Floor 30x30 Matt Grey,Ceramic Floor,140,1746.57,3.12,236894.0,1155.0,161700.0,Delivered

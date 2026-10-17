@@ -1,0 +1,117 @@
+{
+  "description": "Evaluation set for the AI Business Analyst. Each case is run against the bundled sample data with the default filters (last 3 complete months: Jul-Sep 2026) unless the question names a region or period. 'checks' compare evidence values with expectations that were confirmed independently in the sample data.",
+  "cases": [
+    {
+      "id": "Q01",
+      "question": "Why did sales increase while collections fell behind?",
+      "expectedAnalyses": ["sales_vs_collections"],
+      "requiredEvidence": ["kpi.salesAttainmentPct", "kpi.collectionAttainmentPct", "diag.region.South"],
+      "checks": [
+        { "key": "kpi.salesAttainmentPct", "op": ">", "value": 100 },
+        { "key": "kpi.collectionAttainmentPct", "op": "<", "value": 100 },
+        { "key": "diag.region.South", "op": "<", "value": 0 }
+      ],
+      "expectHypotheses": true
+    },
+    {
+      "id": "Q02",
+      "question": "Which regions, products, channels, and customers are driving or reducing performance?",
+      "expectedAnalyses": ["performance_drivers", "product_performance"],
+      "requiredEvidence": ["drivers.region.Central", "drivers.channel.Distribution", "prod.portfolioMargin"],
+      "checks": []
+    },
+    {
+      "id": "Q03",
+      "question": "Which customers contribute the largest share of revenue?",
+      "expectedAnalyses": ["customer_concentration"],
+      "requiredEvidence": ["conc.top1", "conc.top5", "conc.hhi"],
+      "checks": [
+        { "key": "conc.top5", "op": ">", "value": 0 },
+        { "key": "conc.top5", "op": "<", "value": 100 }
+      ]
+    },
+    {
+      "id": "Q04",
+      "question": "Which accounts have significant outstanding balances or overdue invoices?",
+      "expectedAnalyses": ["receivables_risk"],
+      "requiredEvidence": ["kpi.outstanding", "kpi.overdue", "aging.90+ days"],
+      "checks": [{ "key": "kpi.overdue", "op": ">", "value": 0 }],
+      "expectRecommendations": true
+    },
+    {
+      "id": "Q05",
+      "question": "Which distributors may need attention based on transparent business indicators?",
+      "expectedAnalyses": ["distributor_attention"],
+      "requiredEvidence": ["health.dist.Needs attention", "health.method"],
+      "checks": [{ "key": "health.dist.Needs attention", "op": ">", "value": 0 }]
+    },
+    {
+      "id": "Q06",
+      "question": "Which products show declining sales, weak estimated margins, or unusual patterns?",
+      "expectedAnalyses": ["product_performance"],
+      "requiredEvidence": ["prod.portfolioMargin", "prod.flag.P009"],
+      "checks": [{ "key": "prod.flag.P009", "op": "<", "ref": "prod.portfolioMargin" }]
+    },
+    {
+      "id": "Q07",
+      "question": "What could happen if collections improve by 10%?",
+      "expectedAnalyses": ["collection_scenario"],
+      "requiredEvidence": ["scn.Collections in period.baseline", "scn.Collections in period.scenario"],
+      "checks": [{ "key": "scn.Collections in period.scenario", "op": ">", "ref": "scn.Collections in period.baseline" }]
+    },
+    {
+      "id": "Q08",
+      "question": "Which operational issues and customer complaints require management attention?",
+      "expectedAnalyses": ["complaints"],
+      "requiredEvidence": ["cmp.open", "cmp.spike.P013"],
+      "checks": [{ "key": "cmp.spike.P013", "op": ">=", "value": 3 }],
+      "expectRecommendations": true
+    },
+    {
+      "id": "Q09",
+      "question": "Which findings are supported by data, and which require further investigation?",
+      "expectedAnalyses": ["data_quality"],
+      "requiredEvidence": ["dq.orders", "dq.warnings"],
+      "checks": []
+    },
+    {
+      "id": "Q10",
+      "question": "What should a business manager investigate or do next?",
+      "expectedAnalyses": ["next_steps"],
+      "requiredEvidence": ["kpi.salesAttainmentPct", "next.attentionCount"],
+      "checks": [],
+      "expectRecommendations": true
+    },
+    {
+      "id": "Q11",
+      "question": "How are overdue balances in the South region?",
+      "expectedAnalyses": ["receivables_risk"],
+      "requiredEvidence": ["kpi.overdue"],
+      "expectedFilters": { "regions": ["South"] },
+      "checks": []
+    },
+    {
+      "id": "Q12",
+      "question": "What is the sales outlook for the next quarter?",
+      "expectedAnalyses": ["forecast"],
+      "requiredEvidence": ["fc.best", "fc.mape.naive"],
+      "checks": []
+    },
+    {
+      "id": "Q13",
+      "question": "What would happen if we collected 25% more of the overdue amount?",
+      "expectedAnalyses": ["collection_scenario"],
+      "requiredEvidence": ["scn.assumption"],
+      "expectedScenarioPct": 25,
+      "checks": []
+    },
+    {
+      "id": "Q14",
+      "question": "Tell me something interesting",
+      "expectedAnalyses": ["next_steps"],
+      "expectFallback": true,
+      "requiredEvidence": ["kpi.netSales"],
+      "checks": []
+    }
+  ]
+}

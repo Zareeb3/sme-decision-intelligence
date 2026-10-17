@@ -1,0 +1,38 @@
+{
+  "name": "sme-decision-intelligence",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SME AI Decision Intelligence System: verified analytics, grounded AI explanations, scenarios and human-approved workflow actions for a fictional Pakistani tile business.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "eval": "tsx scripts/run-evals.ts",
+    "eval:live": "tsx scripts/run-evals.ts --live",
+    "data:generate": "python scripts/generate_synthetic_data.py",
+    "data:reference": "python scripts/reference_kpis.py"
+  },
+  "dependencies": {
+    "next": "^15.5.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "recharts": "^3.1.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "tailwindcss": "^4.1.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  }
+}
