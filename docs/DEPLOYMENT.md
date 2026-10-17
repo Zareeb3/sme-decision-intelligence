@@ -14,8 +14,8 @@ There are two ways to run the app. Choose by where the company's data should liv
 Needs a Linux VM or Windows server with Docker; 2 vCPU and 4 GB RAM is a reasonable start (see sizing below).
 
 ```bash
-git clone https://github.com/Zareeb3/sme-decision-intelligence.git
-cd sme-decision-intelligence
+git clone https://github.com/Zareeb3/sme-decision-intelligence-pro.git
+cd sme-decision-intelligence-pro
 cp .env.example .env
 # edit .env:
 #   INGEST_TOKEN=<openssl rand -hex 32>
