@@ -162,6 +162,64 @@ export function demoExplain(packet: EvidencePacket): AnalystResponse {
         follow.push("Which accounts have significant outstanding balances or overdue invoices?");
         break;
       }
+      case "complaint_patterns": {
+        const n = get("cmpi.period");
+        if (n) fact(`${n.display} complaints were opened in the period.`, n);
+        const trends = withPrefix("cmpi.trend.");
+        const rising = trends.filter((t) => /increasing/.test(t.label));
+        if (rising.length) fact(`Increasing categories: ${rising.map((t) => `${t.label.split(":")[0]} (${t.display})`).join("; ")}.`, ...rising);
+        else if (trends.length) fact(`No category meets the increase rule. Largest recent categories: ${trends.map((t) => `${t.label.split(":")[0]} (${t.display})`).join("; ")}.`, ...trends, get("cmpi.risingCount"));
+        const regions = withPrefix("cmpi.region.");
+        if (regions.length) fact(`By region: ${regions.map((r) => `${r.label.split(", ")[1]}: ${r.display}`).join("; ")}.`, ...regions);
+        const segs = withPrefix("cmpi.segment.");
+        if (segs.length) fact(`By customer segment: ${segs.map((r) => `${r.label.replace("Complaints in the period from ", "").replace(/ customers$/, "")}: ${r.display}`).join("; ")}.`, ...segs);
+        const rec = withPrefix("cmpi.recurring.");
+        for (const r of rec) {
+          fact(`${r.label}: ${r.display}.`, r);
+          hyps.push({ statement: `Repeated ${r.label.replace("Recurring issue: ", "").toLowerCase()} complaints from several customers may share one cause, such as a batch, a process step or a route.`, evidence_ids: [r.id], how_to_verify: "Trace the affected orders to production batches, dispatch dates and transporters." });
+        }
+        if (rec.length) recs.push({ action: `Open a root-cause investigation for: ${rec.map((r) => r.label.replace("Recurring issue: ", "")).join("; ")}.`, rationale: "The same issue on the same product is being reported by several customers.", evidence_ids: rec.map((r) => r.id), priority: "high" });
+        const rep = withPrefix("cmpi.repeat.");
+        const repN = get("cmpi.repeatCustomers");
+        if (repN) fact(`${repN.display} customers raised more than one complaint in 180 days${rep.length ? `, led by ${rep.map((r) => `${r.label.replace("Repeat complaints: ", "")} (${r.display.split(" (")[0]})`).join(", ")}` : ""}.`, repN, ...rep);
+        const aw = get("cmpi.assoc.with"), ao = get("cmpi.assoc.without");
+        if (aw && ao) {
+          fact(`Median 90-day sales change was ${aw.display} for customers with a recent complaint and ${ao.display} for customers without one.`, aw, ao);
+          unc.push("The sales comparison is an association between two groups of customers; it does not show that complaints caused the difference.");
+        }
+        summary.push(rising.length ? `${rising.length} complaint categor${rising.length === 1 ? "y is" : "ies are"} increasing${rec.length ? `, and ${rec.length} recurring product issue(s) need investigation` : ""}.` : "No complaint category meets the increase rule in the last 90 days.");
+        unc.push("Complaint counts are small, so a few complaints can change a trend.");
+        break;
+      }
+      case "complaint_priorities": {
+        const levels = ["Critical", "High", "Medium", "Low"].map((p) => get(`cmpp.open.${p}`));
+        fact(`Open complaints by priority: ${levels.filter(Boolean).map((l) => `${l!.label.split(" ")[1].replace("-priority", "")} ${l!.value}`).join(", ")}.`, ...levels);
+        const esc = get("cmpp.escalated");
+        if (esc) fact(`${esc.display} open complaints are escalated and waiting for management acknowledgement.`, esc);
+        const items = withPrefix("cmpp.item.");
+        if (items.length) {
+          fact(`Most urgent open complaints: ${items.map((i) => `${i.label.replace("Complaint ", "")}: ${i.display}`).join(" | ")}.`, ...items);
+          recs.push({ action: `Review today: ${items.slice(0, 3).map((i) => i.label.replace("Complaint ", "")).join(", ")}.`, rationale: "They carry the highest priority or an escalation.", evidence_ids: items.slice(0, 3).map((i) => i.id), priority: "high" });
+        }
+        const risk = withPrefix("cmpp.risk.");
+        if (risk.length) {
+          fact(`Customers with elevated complaint risk: ${risk.map((r) => `${r.label.replace("Elevated complaint risk: ", "")} (${r.display})`).join("; ")}.`, ...risk);
+          recs.push({ action: `Ask the account owners to call ${risk.slice(0, 3).map((r) => r.label.replace("Elevated complaint risk: ", "")).join(", ")}.`, rationale: "Open high-priority complaints, escalations or repeat issues put these relationships at risk.", evidence_ids: risk.slice(0, 3).map((r) => r.id), priority: "high" });
+          hyps.push({ statement: "Unresolved complaints may be contributing to weaker ordering by some of these customers.", evidence_ids: risk.map((r) => r.id), how_to_verify: "Ask the account owners and compare order patterns before and after the complaint; other causes (season, credit limits, competition) are possible." });
+        }
+        const ret = withPrefix("cmpp.retention.");
+        for (const r of ret) fact(`${r.label}: ${r.display}`, r);
+        const depts = withPrefix("cmpp.dept.");
+        if (depts.length) {
+          fact(`Open complaints by department: ${depts.map((d) => `${d.label.split(":")[0]} ${d.display}`).join("; ")}.`, ...depts);
+          recs.push({ action: `${depts[0].label.split(":")[0]} should prioritise its high and critical complaints first.`, rationale: "It holds the most high-priority open complaints.", evidence_ids: [depts[0].id], priority: "medium" });
+        }
+        const rv = get("cmpp.reg.awaitingReview"), nt = get("cmpp.reg.notTriaged"), od = get("cmpp.reg.responseOverdue");
+        if (rv && nt && od) fact(`${rv.display} complaints are awaiting human review, ${nt.display} are not yet triaged and ${od.display} are past their first-response target.`, rv, nt, od);
+        summary.push(`${esc?.display ?? "No"} escalated complaints await management${items.length ? `; ${items.length} complaints are critical, high-priority or escalated` : ""}.`);
+        unc.push("Risk points and priorities are transparent rules for ordering work, not predictions.");
+        break;
+      }
       case "complaints": {
         const op = get("cmp.open"), hi = get("cmp.openHigh"), opened = get("cmp.opened"), res = get("cmp.avgResolution");
         fact(`${op?.display} complaints are open, ${hi?.display} of them high severity; ${opened?.display} were opened in the period.`, op, hi, opened);

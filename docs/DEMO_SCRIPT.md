@@ -21,6 +21,9 @@ Scenarios: "If we collect 10% more of the overdue balance, collections rise by a
 **1:55 – Close (5 s)**
 "Deterministic analytics for the numbers, AI for the explanation, people for the decisions, tested against an independent pandas implementation."
 
+## Complaint triage (2 min)
+Complaints → **Triage queue**: "Every complaint is a case. Escalations first: two product-safety reports — one calmly worded — were made Critical by a business rule, whatever tone the customer used." Open **CR-26-0001**: original text on top, unchanged; below it the suggestion, clearly labelled (rule-based without a key, AI with one), the rules that fired, and *what was sent* — the phone number was removed. Type a name in **Acting as**, confirm the triage, acknowledge the escalation, move to investigation; then try **Resolve** without a note: blocked. Open **CR-26-0007**: the complaint tries to instruct the system to close itself and approve a refund — flagged, ignored. **Management insights**: shade variation on GVT Marble Glossy is rising across 9 customers; customers with elevated complaint risk; complaints vs sales shown as an association, not a cause. Ask the analyst: *Which complaints require immediate management attention?*
+
 ## If asked "how do we get our data in?" (1 min)
 Data sources → **Automated pipeline** tab: "Nightly SAP extract, our script maps your codes, and the app validates and loads it; invalid loads never replace good data, and each dataset can be restored to its previous version." Then **Upload** tab: drop `data/example_exports/sales_register_export.csv` (semicolon-separated, day-first dates, business column names) and open **Columns** to show the automatic matching. Settings: "Your currency, fiscal year and thresholds; the sample company can be switched off entirely."
 

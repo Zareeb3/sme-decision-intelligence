@@ -24,13 +24,18 @@ npm run build         # production build (also type-checks pages)
 | `actions.test.ts` | Action proposals respect thresholds, unique IDs, approval required with a named approver, rate limiter |
 | `erp.test.ts` | Real-export handling: delimiters, SAP ruler lines, trailing minus, DMY/MDY/YYYYMMDD dates, business and SAP column names, dataset detection, defaults (region/channel from customer, due date from terms), credit notes reducing sales, several payments per invoice, credit notes not counted as collections, currency and fiscal-year handling, configurable rules, settings validation, name anonymisation round trip, and the example ERP exports in `data/example_exports/` producing the same KPIs as the sample |
 | `server.test.ts` | Server storage (save, manifest, previous-version restore, delete), ingest replace and append-by-key, rejection of invalid loads without touching current data, JSON bodies, drop-folder import to processed/failed with a log, token checks |
+| `complaints.test.ts` | Complaint module: AI output schema and label validation, safety forcing Critical, commitment guard, every AI failure mode (timeout, 429, 5xx, non-JSON, missing tool output, invalid structure, network error, no key) falling back to labelled rules, prompt-injection containment and detection, redaction (and that amounts/names are not sent), each business rule and that rules never lower priority, intake validation, idempotency, reference checks, workflow controls (confirmation before work, reasons below rule minimum, escalation before resolution, notes, closing, reopening, reply approval, version conflicts, original text unchanged), duplicate detection, record linking, merging the register into analytics, insights on the sample, sample register seeding, triage-evaluation regression thresholds, the server register (persistence, parallel submissions, HTTP status mapping) and analyst routing / grounded evidence |
 | `pipeline.test.ts` | Runs `pipeline/sap_pipeline.py` on the synthetic SAP extracts in `data/sap_sample/` and checks that the app computes the same KPIs as from the original sample (skipped when Python/pandas are unavailable) |
 
 The fixture in `tests/fixtures.ts` is small enough that every expected value can be checked by hand; comments next to each record show the numbers.
 
+## Complaint triage evaluation
+
+See [COMPLAINT_TRIAGE.md §8](COMPLAINT_TRIAGE.md#8-evaluation): 36 hand-labelled synthetic complaints including edge cases, per-category precision / recall / F1, department and priority accuracy, escalation and safety recall, injection and duplicate detection. Rule-based results are a regression check (thresholds asserted in `complaints.test.ts`); the live model still needs to be evaluated.
+
 ## The evaluation set
 
-`evals/questions.json` holds 14 realistic management questions. For each, the harness (`src/lib/ai/evals.ts`) checks:
+`evals/questions.json` holds 18 realistic management questions (Q15–Q18 cover complaints). For each, the harness (`src/lib/ai/evals.ts`) checks:
 
 1. **Routing**: the expected analyses ran (and filters/percentages were extracted where relevant).
 2. **Evidence**: required evidence items are present.
@@ -51,7 +56,7 @@ The development environment for this project could not reach the npm registry, s
 |---|---|---|
 | Synthetic data generation | Run | Python 3 + pandas |
 | Pandas reference KPIs | Run | `scripts/reference_kpis.py` |
-| All 182 tests in 11 suites (including the SAP pipeline test with Python + pandas) | Run, all passing | The unchanged test files, executed with `tsx` and a minimal Vitest-compatible shim |
+| All 234 tests in 12 suites (including the SAP pipeline test with Python + pandas) | Run, all passing | The unchanged test files, executed with `tsx` and a minimal Vitest-compatible shim |
 | Strict type-check of all source, tests and scripts | Run, clean | TypeScript compiler with real Zod, Node and React 19 types; Next.js and Recharts declared loosely because they could not be installed |
 | Evaluation set (demo mode) | Run, 14/14 | `scripts/run-evals.ts` |
 | Company-data journey: welcome with sample switched off → setup wizard → CSV upload with column matching → server storage → all pages; SAP pipeline `--push` to the ingest API; wrong token rejected; drop-folder import and failure log; desktop and 390 px mobile widths | Run against the real API route handlers (served by a small Node harness), in headless Chromium |
@@ -61,6 +66,9 @@ The development environment for this project could not reach the npm registry, s
 | Charts rendered by Recharts | **Not seen yet** | Charts were placeholders in the offline preview |
 | Live LLM evaluation | **Not run** | No API key in the development environment |
 | Vercel deployment | **Not done** | See DEPLOYMENT.md |
+| Complaint triage evaluation, rule-based (36 cases) | Run | `npm run eval:triage`; results in `evals/results-triage-rules.md` and docs/COMPLAINT_TRIAGE.md §8 |
+| Complaint triage evaluation, live model | **Not run** | No API key in the development environment; run `npm run eval:triage:live` |
+| Complaint module in the browser: queue, intake with reference checks, triage, confirmation, escalation acknowledgement, status changes and blocked transitions, insights, analyst questions, 390 px mobile; server register with a version conflict | Run | Against the real API route handlers in headless Chromium, in sample mode (browser register) and company mode (server register) |
 | Docker image build | **Not run** | No Docker in the development environment; build once on the target server or in CI |
 | Real SAP system extracts | **Not run** | Only synthetic SAP-format extracts; the pilot includes a reconciliation week |
 | Basic-auth middleware in a running Next.js server | **Not run** | Logic reviewed; verify after the first deployment |

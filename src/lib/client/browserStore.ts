@@ -11,6 +11,7 @@ import type { ColumnMapping } from "../data/mapping";
 
 const DB_NAME = "decision-intelligence";
 const STORE = "datasets";
+const CASES = "cases";
 
 export interface StoredDataset {
   kind: DatasetKind;
@@ -24,8 +25,12 @@ function openDb(): Promise<IDBDatabase | null> {
   return new Promise((resolve) => {
     try {
       if (typeof indexedDB === "undefined") return resolve(null);
-      const req = indexedDB.open(DB_NAME, 1);
-      req.onupgradeneeded = () => req.result.createObjectStore(STORE, { keyPath: "kind" });
+      const req = indexedDB.open(DB_NAME, 2);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: "kind" });
+        if (!db.objectStoreNames.contains(CASES)) db.createObjectStore(CASES, { keyPath: "ns" });
+      };
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => resolve(null);
     } catch {
@@ -71,6 +76,51 @@ export async function deleteBrowserDataset(kind?: DatasetKind): Promise<void> {
       const tx = db.transaction(STORE, "readwrite");
       if (kind) tx.objectStore(STORE).delete(kind);
       else tx.objectStore(STORE).clear();
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    } catch {
+      resolve();
+    }
+  });
+}
+
+/** Complaint register kept in this browser, per namespace ("company" or "sample"). */
+export async function loadBrowserCases(ns: string): Promise<unknown[] | null> {
+  const db = await openDb();
+  if (!db) return null;
+  return new Promise((resolve) => {
+    try {
+      const req = db.transaction(CASES, "readonly").objectStore(CASES).get(ns);
+      req.onsuccess = () => resolve(((req.result as { cases?: unknown[] } | undefined)?.cases ?? []) as unknown[]);
+      req.onerror = () => resolve(null);
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+export async function saveBrowserCases(ns: string, cases: unknown[]): Promise<boolean> {
+  const db = await openDb();
+  if (!db) return false;
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(CASES, "readwrite");
+      tx.objectStore(CASES).put({ ns, cases, savedAt: new Date().toISOString() });
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => resolve(false);
+    } catch {
+      resolve(false);
+    }
+  });
+}
+
+export async function deleteBrowserCases(ns: string): Promise<void> {
+  const db = await openDb();
+  if (!db) return;
+  await new Promise<void>((resolve) => {
+    try {
+      const tx = db.transaction(CASES, "readwrite");
+      tx.objectStore(CASES).delete(ns);
       tx.oncomplete = () => resolve();
       tx.onerror = () => resolve();
     } catch {

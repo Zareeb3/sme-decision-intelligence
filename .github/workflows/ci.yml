@@ -25,5 +25,7 @@ jobs:
         run: npm test
       - name: AI analyst evaluation (demo mode)
         run: npm run eval
+      - name: Complaint triage evaluation (rule-based)
+        run: npm run eval:triage
       - name: Production build
         run: npm run build

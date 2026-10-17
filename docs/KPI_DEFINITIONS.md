@@ -69,5 +69,17 @@ Modified z-score = 0.6745 × (x − median) / MAD over the previous 12 months (m
 ### Complaint spike (`complaints.ts`)
 At least 3 complaints for a product in the last 60 days and at least 3× its average 60-day count over the prior 12 months.
 
+### Complaint triage (`lib/complaints/insights.ts`)
+| Indicator | Definition |
+|---|---|
+| Awaiting review | Open cases with an assessment but no confirmed triage |
+| Not yet triaged | Open cases with neither an assessment nor a confirmed triage |
+| Past first-response target | Open cases where no person has made a decision (confirmation, status change, approval, acknowledgement) within the target hours for their priority (defaults 24 / 48 / 120 / 240) |
+| Reviewer agreement | Share of confirmed cases where the reviewer kept the suggested category / priority / department; split by live AI and rule-based suggestions |
+| Increasing category | At least 3 complaints in the last 90 days, at least 2 more than the 90 days before, and at least 1.5× that count |
+| Recurring issue | At least N complaints (default 3) on the same product and category within the systemic window (default 90 days) |
+| Complaint risk points | 2 per open high/critical complaint (max 4), 2 for an escalation awaiting management, 1 for 3+ complaints in 180 days, 1 for a 90-day sales drop of 10% or more; listed from 3 points. A prioritisation aid, not a churn prediction |
+| Complaints–sales association | Median 90-day sales change of active customers with vs without a complaint in the last 90 days, with n; not a causal estimate |
+
 ### Forecast (`forecast.ts`)
 Naive, 3-month moving average, seasonal naive and seasonal naive × year-on-year trend are each backtested on the last 6 months (one-step-ahead, rolling origin). The method with the lowest mean absolute percentage error is used for a 3-month outlook; the range shown is ± the largest backtest error. Minimum 18 months of history.

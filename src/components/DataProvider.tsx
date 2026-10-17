@@ -22,6 +22,11 @@ import { DATASET_SPECS } from "@/lib/data/schemas";
 import type { DataBundle, DatasetKind } from "@/lib/data/types";
 import type { DatasetMeta, Manifest } from "@/lib/server/storage";
 import type { ValidationResult } from "@/lib/data/validate";
+import { withCases } from "@/lib/complaints/merge";
+import { taxonomyForModel } from "@/lib/complaints/context";
+import { buildSampleRegister, type SeedCase } from "@/lib/complaints/seed";
+import type { ComplaintCase } from "@/lib/complaints/types";
+import { browserCaseStore, serverCaseStore, type CaseStore } from "@/lib/client/caseStore";
 
 type Status = "loading" | "ready" | "empty" | "error";
 export type DataOrigin = "server" | "browser" | "sample";
@@ -63,6 +68,19 @@ interface DataContextValue {
   saveSettings: (s: CompanySettings) => Promise<string>;
   setHideSample: (hide: boolean) => Promise<void>;
   hideSample: boolean;
+  /** Model without the complaint register (imported data only). */
+  baseModel: Model | null;
+  /** Complaint register for the current data origin. */
+  cases: ComplaintCase[];
+  casesState: "idle" | "loading" | "ready" | "error";
+  casesError: string | null;
+  caseStore: CaseStore | null;
+  /** Replace one case in memory after a change was saved. */
+  putCase: (c: ComplaintCase) => void;
+  refreshCases: () => Promise<void>;
+  resetSampleCases: () => Promise<void>;
+  /** "Now" for response-time targets: the data snapshot for sample data, the real time otherwise. */
+  registerNow: () => Date;
 }
 
 const EMPTY_FILTERS: Filters = { start: "", end: "", regions: [], channels: [], categories: [], productIds: [] };
@@ -92,6 +110,10 @@ export function DataProvider({ children, sampleBasePath = "/sample-data" }: { ch
   const [status, setStatus] = useState<Status>("loading");
   const [error, setError] = useState<string | null>(null);
   const [model, setModel] = useState<Model | null>(null);
+  const [cases, setCases] = useState<ComplaintCase[]>([]);
+  const [casesState, setCasesState] = useState<DataContextValue["casesState"]>("idle");
+  const [casesError, setCasesError] = useState<string | null>(null);
+  const [caseStore, setCaseStore] = useState<CaseStore | null>(null);
   const [loadResult, setLoadResult] = useState<LoadResult | null>(null);
   const [origin, setOrigin] = useState<DataOrigin | null>(null);
   const [datasets, setDatasets] = useState<DataContextValue["datasets"]>({});
@@ -183,6 +205,52 @@ export function DataProvider({ children, sampleBasePath = "/sample-data" }: { ch
     void reload();
   }, [reload]);
 
+  const loadCases = useCallback(
+    async (m: Model, from: DataOrigin, opts: { reseed?: boolean; silent?: boolean } = {}) => {
+      if (!opts.silent) setCasesState("loading");
+      try {
+        const store = from === "server" ? serverCaseStore() : await browserCaseStore(from === "sample" ? "sample" : "company");
+        let list = await store.list();
+        if (from === "sample" && store.replaceAll && (opts.reseed || list.length === 0)) {
+          const seed = await fetch(`${sampleBasePath}/complaint_texts.json`).then((r) => (r.ok ? (r.json() as Promise<{ cases: SeedCase[] }>) : null)).catch(() => null);
+          if (seed) {
+            list = await buildSampleRegister(m, seed.cases, taxonomyForModel(m));
+            await store.replaceAll(list);
+          }
+        }
+        setCaseStore(store);
+        setCases(list);
+        setCasesState("ready");
+        setCasesError(null);
+      } catch (e) {
+        setCases([]);
+        setCasesState("error");
+        setCasesError((e as Error).message);
+      }
+    },
+    [sampleBasePath],
+  );
+
+  useEffect(() => {
+    if (!model || !origin) {
+      setCases([]);
+      setCaseStore(null);
+      setCasesState("idle");
+      return;
+    }
+    void loadCases(model, origin);
+  }, [model, origin, loadCases]);
+
+  const mergedModel = useMemo(() => (model ? withCases(model, cases) : null), [model, cases]);
+  const putCase = useCallback((c: ComplaintCase) => setCases((xs) => (xs.some((x) => x.id === c.id) ? xs.map((x) => (x.id === c.id ? c : x)) : [...xs, c])), []);
+  const refreshCases = useCallback(async () => {
+    if (model && origin) await loadCases(model, origin, { silent: true });
+  }, [model, origin, loadCases]);
+  const resetSampleCases = useCallback(async () => {
+    if (model && origin === "sample") await loadCases(model, origin, { reseed: true });
+  }, [model, origin, loadCases]);
+  const registerNow = useCallback(() => (origin === "sample" && model ? new Date(`${model.maxDate}T23:59:00Z`) : new Date()), [origin, model]);
+
   const loadSampleFn = useCallback(async () => {
     prefs.setHideSample(false);
     setHideSampleState(false);
@@ -233,6 +301,7 @@ export function DataProvider({ children, sampleBasePath = "/sample-data" }: { ch
     async (kind?: DatasetKind) => {
       if (server.storage.enabled) await fetch(kind ? `/api/data/${kind}` : "/api/data", { method: "DELETE" }).catch(() => null);
       await deleteBrowserDataset(kind);
+      if (!kind) await (await browserCaseStore("company")).clear?.();
       await reload();
     },
     [server.storage.enabled, reload],
@@ -281,7 +350,16 @@ export function DataProvider({ children, sampleBasePath = "/sample-data" }: { ch
     () => ({
       status,
       error,
-      model,
+      model: mergedModel,
+      baseModel: model,
+      cases,
+      casesState,
+      casesError,
+      caseStore,
+      putCase,
+      refreshCases,
+      resetSampleCases,
+      registerNow,
       loadResult,
       origin,
       datasets,
@@ -289,7 +367,7 @@ export function DataProvider({ children, sampleBasePath = "/sample-data" }: { ch
       settings: origin === "sample" ? settings : companySettings,
       filters,
       setFilters,
-      resetFilters: () => model && setFilters(defaultFilters(model)),
+      resetFilters: () => mergedModel && setFilters(defaultFilters(mergedModel)),
       reload,
       loadSample: loadSampleFn,
       saveDatasets,
@@ -299,7 +377,7 @@ export function DataProvider({ children, sampleBasePath = "/sample-data" }: { ch
       setHideSample: setHideSampleFn,
       hideSample,
     }),
-    [status, error, model, loadResult, origin, datasets, server, settings, companySettings, filters, reload, loadSampleFn, saveDatasets, removeCompanyData, rollbackDataset, saveSettingsFn, setHideSampleFn, hideSample],
+    [status, error, model, mergedModel, cases, casesState, casesError, caseStore, putCase, refreshCases, resetSampleCases, registerNow, loadResult, origin, datasets, server, settings, companySettings, filters, reload, loadSampleFn, saveDatasets, removeCompanyData, rollbackDataset, saveSettingsFn, setHideSampleFn, hideSample],
   );
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }

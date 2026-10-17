@@ -23,6 +23,11 @@ import { formatDays, formatMonth, formatNumber, formatPKR, formatPct, formatPeri
 import { checkBundleConsistency } from "../data/validate";
 import type { AnalysisId, EvidenceItem, EvidencePacket } from "./types";
 import { getSettings } from "../settings";
+import { complaintInsights, registerStats } from "../complaints/insights";
+import { currentPriority } from "../complaints/merge";
+import { isOpenStatus } from "../complaints/workflow";
+import { severityToPriority } from "../complaints/taxonomy";
+import type { ComplaintCase } from "../complaints/types";
 
 type Unit = EvidenceItem["unit"];
 
@@ -79,7 +84,7 @@ export function buildEvidence(
   f: Filters,
   question: string,
   analyses: AnalysisId[],
-  opts: { scenarioPct?: number } = {},
+  opts: { scenarioPct?: number; cases?: ComplaintCase[]; now?: Date } = {},
 ): EvidencePacket {
   const b = new EvidenceBuilder();
   const k = computeKpis(model, f);
@@ -239,6 +244,73 @@ export function buildEvidence(
           b.add(`scn.${m.label}.scenario`, `${m.label}: with ${pct}% more of overdue collected`, m.scenario, m.unit === "PKR" ? "PKR" : m.unit === "days" ? "days" : "%");
         }
         limitations.push("This is a hypothetical calculation from a stated assumption, not a prediction that the extra collection will happen.");
+        break;
+      }
+      case "complaint_patterns": {
+        const ins = complaintInsights(model, f);
+        b.add("cmpi.period", `Complaints opened in the period (${formatPeriod(f.start, f.end)})`, ins.periodComplaints, "count");
+        const rising = ins.categoryTrend.filter((t) => t.increasing);
+        const trendRows = rising.length ? rising.slice(0, 4) : ins.categoryTrend.slice(0, 3);
+        for (const t of trendRows) {
+          b.add(`cmpi.trend.${t.category}`, `${t.category}: complaints in the last ${ins.trendWindowDays} days${t.increasing ? " (increasing)" : ""}`, t.recent, "count", `${t.recent} in the ${ins.trendWindowDays} days to ${ins.asOf} vs ${t.previous} in the ${ins.trendWindowDays} days before`);
+        }
+        b.add("cmpi.risingCount", "Categories flagged as increasing", rising.length, "count", `${rising.length} (rule: at least 3 recent complaints, at least 2 more than before and at least 1.5 times the earlier count)`);
+        for (const r0 of ins.byRegion.slice(0, 4)) b.add(`cmpi.region.${r0.key}`, `Complaints in the period, ${r0.key} region`, r0.count, "count", `${r0.count} opened, ${r0.open} still open`);
+        for (const r0 of ins.bySegment.slice(0, 3)) b.add(`cmpi.segment.${r0.key}`, `Complaints in the period from ${r0.key} customers`, r0.count, "count", `${r0.count} opened, ${r0.open} still open`);
+        for (const p0 of ins.byProduct.slice(0, 3)) b.add(`cmpi.product.${p0.key}`, `Complaints in the period on ${p0.label}`, p0.count, "count", `${p0.count} opened; most common: ${p0.topCategory}`);
+        b.add("cmpi.repeatCustomers", "Customers with repeat complaints (180 days)", ins.repeatCustomers.length, "count");
+        for (const rc of ins.repeatCustomers.slice(0, 3)) b.add(`cmpi.repeat.${rc.customer_id}`, `Repeat complaints: ${rc.name}`, rc.count, "count", `${rc.count} complaints in 180 days (${rc.categories.join(", ")}); ${rc.open} open`);
+        for (const ri of ins.recurringIssues.slice(0, 3)) b.add(`cmpi.recurring.${ri.product_id}.${ri.category}`, `Recurring issue: ${ri.category} on ${ri.product}`, ri.count, "count", `${ri.count} complaints from ${ri.customers} customers in the last ${getSettings().rules.complaints.systemicWindowDays} days; ${ri.open} open`);
+        const sa = ins.salesAssociation;
+        if (sa.withComplaints.n >= 5 && sa.without.n >= 5) {
+          b.add("cmpi.assoc.with", "Median 90-day sales change, customers with a complaint in the last 90 days", sa.withComplaints.medianTrendPct, "%", `${formatSignedPct(sa.withComplaints.medianTrendPct)} (n = ${sa.withComplaints.n} customers)`);
+          b.add("cmpi.assoc.without", "Median 90-day sales change, customers without a complaint in the last 90 days", sa.without.medianTrendPct, "%", `${formatSignedPct(sa.without.medianTrendPct)} (n = ${sa.without.n} customers)`);
+          limitations.push("The sales comparison between customers with and without complaints is an association; it does not show that complaints caused any sales change.");
+        }
+        limitations.push("Complaint counts are small; a difference of a few complaints can be noise. Patterns show where to look, not causes.");
+        const unclassified = model.complaints.filter((c) => c.origin === "register" && c.category === "Not yet classified").length;
+        if (unclassified) limitations.push(`${unclassified} complaint(s) entered in the app are not classified yet and are counted as "Not yet classified".`);
+        break;
+      }
+      case "complaint_priorities": {
+        const ins = complaintInsights(model, f);
+        for (const o of ins.openByPriority) b.add(`cmpp.open.${o.priority}`, `Open ${o.priority.toLowerCase()}-priority complaints on ${ins.asOf}`, o.total, "count", `${o.total} (${o.age["0-7"]} up to 7 days old, ${o.age["8-30"]} 8-30 days, ${o.age["31-60"] + o.age["60+"]} older)`);
+        const asOf = ins.asOf;
+        const open = model.complaints.filter((c) => c.date_opened <= asOf && (c.status !== "Resolved" || (c.date_resolved !== "" && c.date_resolved > asOf)));
+        const pr = (c: (typeof open)[number]) => c.priority ?? severityToPriority(c.severity);
+        b.add("cmpp.escalated", "Open complaints escalated and awaiting management acknowledgement", open.filter((c) => c.escalated).length, "count");
+        const urgent = open
+          .filter((c) => pr(c) === "Critical" || pr(c) === "High" || c.escalated)
+          .sort((a, b2) => ["Critical", "High", "Medium", "Low"].indexOf(pr(a)) - ["Critical", "High", "Medium", "Low"].indexOf(pr(b2)) || (a.date_opened < b2.date_opened ? -1 : 1))
+          .slice(0, 5);
+        for (const c of urgent) {
+          const name = model.customersById.get(c.customer_id)?.customer_name ?? "customer not in master";
+          const age = Math.max(0, Math.round((Date.parse(asOf) - Date.parse(c.date_opened)) / 86_400_000));
+          b.add(`cmpp.item.${c.complaint_id}`, `Complaint ${c.caseId ?? c.complaint_id} (${name})`, age, "days", `${c.category} on ${c.product_name}; ${pr(c)} priority${c.priorityConfirmed ? " (confirmed)" : ""}; ${c.assigned_team}; open ${age} days${c.escalated ? "; escalated" : ""}`);
+        }
+        const depts = new Map<string, { open: number; high: number }>();
+        for (const c of open) {
+          const d = depts.get(c.assigned_team) ?? { open: 0, high: 0 };
+          d.open += 1;
+          if (pr(c) === "High" || pr(c) === "Critical") d.high += 1;
+          depts.set(c.assigned_team, d);
+        }
+        for (const [d, v] of [...depts.entries()].sort((a, b2) => b2[1].high - a[1].high || b2[1].open - a[1].open).slice(0, 5)) b.add(`cmpp.dept.${d}`, `${d}: open complaints`, v.open, "count", `${v.open} open, ${v.high} high or critical`);
+        for (const rc of ins.riskCustomers.slice(0, 4)) b.add(`cmpp.risk.${rc.customer_id}`, `Elevated complaint risk: ${rc.name}`, rc.score, "score", `${rc.score} risk points: ${rc.reasons.join("; ")}`);
+        if (opts.cases?.length) {
+          const st = registerStats(opts.cases, opts.now ?? new Date());
+          b.add("cmpp.reg.awaitingReview", "Complaints with a suggestion awaiting human review", st.awaitingReview, "count");
+          b.add("cmpp.reg.notTriaged", "Open complaints not yet triaged", st.notTriaged, "count");
+          b.add("cmpp.reg.responseOverdue", "Open complaints past their first-response target", st.responseOverdue, "count");
+          const retention = opts.cases.filter((c) => isOpenStatus(c.status) && c.assessments.at(-1)?.rules.hits.some((h) => h.id === "retention" || h.id === "legal"));
+          for (const c of retention.slice(0, 3)) {
+            const name = c.customerId ? (model.customersById.get(c.customerId)?.customer_name ?? c.customerId) : c.customerNameEntered;
+            const hit = c.assessments.at(-1)!.rules.hits.find((h) => h.id === "retention" || h.id === "legal")!;
+            b.text(`cmpp.retention.${c.id}`, `Retention or legal risk in complaint ${c.id} (${name})`, `${hit.label}: ${hit.reason} Status ${c.status}; priority ${currentPriority(c).priority ?? "not set"}.`);
+          }
+        }
+        limitations.push("Priorities for complaints not reviewed in the app come from the imported severity (High, Medium, Low).");
+        limitations.push("Risk points are transparent prioritisation rules, not a prediction that a customer will leave.");
         break;
       }
       case "complaints": {

@@ -27,7 +27,7 @@ const MULT: Record<string, number> = { b: 1e9, bn: 1e9, billion: 1e9, m: 1e6, mn
 
 const numberRe = (currency: string) =>
   new RegExp(
-    `(${currency}|PKR|Rs\\.?)?\\s?([−-])?(\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.(\\d+))?(?:\\s?(billion|million|thousand|bn|mn|B|M|K)(?![a-z]))?\\s?(%|percent|pts|percentage points|days?)?`,
+    `(?:\\b(${currency}|PKR|Rs\\.?))?\\s?([−-])?(\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.(\\d+))?(?:\\s?(billion|million|thousand|bn|mn|B|M|K)(?![a-z]))?\\s?(%|percent|pts|percentage points|days?)?`,
     "gi",
   );
 

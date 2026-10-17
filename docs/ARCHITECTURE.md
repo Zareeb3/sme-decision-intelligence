@@ -37,6 +37,7 @@ flowchart TB
 | `lib/settings.ts` | Company profile, currency, fiscal year, partner type, business-rule thresholds | Every threshold the analytics use comes from one validated, editable place |
 | `lib/server/storage.ts`, `ingest.ts`, `api/data`, `api/ingest` | Server storage with version restore, ingest API, drop folder | Company data is shared and updated by pipelines without anyone uploading files |
 | `lib/ai/anonymise.ts` | Replace customer names in evidence before sending, restore afterwards | Customer names never need to leave the company |
+| `lib/complaints/*`, `api/complaints/*` | Complaint register, triage (LLM tool call + validation + fallback), business rules, workflow, linking, insights, evaluation | Same pattern as the analyst: the model suggests through a fixed schema, deterministic code decides limits, people decide outcomes; see docs/COMPLAINT_TRIAGE.md |
 | `pipeline/sap_pipeline.py` | SAP VBRK/VBRP/KNA1/KNVV/BSID/BSAD/QMEL → canonical CSVs → ingest API | Runs inside the company network, close to SAP |
 | `lib/analytics/model.ts` | Indexes and joins, cached per dataset | Every analysis needs the same lookups; computing them once keeps functions simple |
 | `lib/analytics/filters.ts` | Shared filter semantics | Sales use order date, collections use payment date, receivables are a snapshot; written down once so every page agrees |

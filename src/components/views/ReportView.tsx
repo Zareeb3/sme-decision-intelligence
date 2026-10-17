@@ -15,6 +15,7 @@ import { productPerformance } from "@/lib/analytics/products";
 import { previousPeriod } from "@/lib/analytics/dates";
 import { describeFilters } from "@/lib/analytics/filters";
 import { formatDate, formatDays, formatPKR, formatPct, formatPeriod, formatSignedPct } from "@/lib/analytics/format";
+import { complaintInsights, registerStats } from "@/lib/complaints/insights";
 
 function Kpi({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
@@ -28,7 +29,7 @@ function Kpi({ label, value, sub }: { label: string; value: string; sub?: string
 
 export function ReportView() {
   const ready = useReadyData();
-  const { origin } = useData();
+  const { origin, cases, registerNow } = useData();
   const data = useMemo(() => {
     if (!ready) return null;
     const { model, filters: f } = ready;
@@ -41,10 +42,14 @@ export function ReportView() {
       regions: diagnoseSalesVsCollections(model, f).regionRows,
       overdue: receivablesByCustomer(model, f).slice(0, 8),
       products: productPerformance(model, f).rows.filter((r) => r.flags.length).slice(0, 6),
+      complaints: complaintInsights(model, f),
+      register: cases.length ? registerStats(cases, registerNow()) : null,
     };
-  }, [ready]);
+  }, [ready, cases, registerNow]);
   if (!ready || !data) return null;
-  const { k, prev, insights, regions, overdue, products } = data;
+  const { k, prev, insights, regions, overdue, products, complaints, register } = data;
+  const risingCats = complaints.categoryTrend.filter((t) => t.increasing);
+  const highOpen = complaints.openByPriority.filter((p) => p.priority === "Critical" || p.priority === "High").reduce((s, p) => s + p.total, 0);
   const change = (a: number, b: number) => (b > 0 ? ((a - b) / b) * 100 : null);
 
   return (
@@ -146,6 +151,23 @@ export function ReportView() {
             </ul>
           </section>
         )}
+
+        <section className="mt-6 break-inside-avoid">
+          <h2 className="border-b border-line pb-1 text-[0.95rem] font-semibold">Complaints</h2>
+          <ul className="mt-2 space-y-1 text-[0.8rem]">
+            <li>
+              {highOpen} open critical or high-priority complaint(s) as of {formatDate(complaints.asOf)}
+              {register ? `; ${register.escalatedOpen} escalated and awaiting management; ${register.awaitingReview} suggestion(s) awaiting review; ${register.responseOverdue} past the first-response target` : ""}.
+            </li>
+            {risingCats.length > 0 && <li>Increasing: {risingCats.map((t) => `${t.category} (${t.recent} in 90 days vs ${t.previous} before)`).join("; ")}.</li>}
+            {complaints.recurringIssues.slice(0, 3).map((r) => (
+              <li key={`${r.product_id}-${r.category}`}>
+                Recurring: {r.category} on {r.product}, {r.count} complaints from {r.customers} customers ({r.open} open). Root cause not yet established.
+              </li>
+            ))}
+            {complaints.riskCustomers.length > 0 && <li>Elevated complaint risk: {complaints.riskCustomers.slice(0, 4).map((r) => r.name).join(", ")}.</li>}
+          </ul>
+        </section>
 
         <footer className="mt-8 border-t border-line pt-2 text-[0.7rem] text-faint">
           Generated {formatDate(new Date().toISOString().slice(0, 10))} by Decision Intelligence from {origin === "sample" ? "fictional sample data" : "validated company data"}. Amounts in {ready.settings.currency}. Gross profit uses estimated costs. Findings are rule-based; definitions are available in the app.

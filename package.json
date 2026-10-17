@@ -13,7 +13,10 @@
     "eval": "tsx scripts/run-evals.ts",
     "eval:live": "tsx scripts/run-evals.ts --live",
     "data:generate": "python scripts/generate_synthetic_data.py",
-    "data:reference": "python scripts/reference_kpis.py"
+    "data:reference": "python scripts/reference_kpis.py",
+    "eval:triage": "tsx scripts/run-triage-eval.ts",
+    "eval:triage:live": "tsx scripts/run-triage-eval.ts --live",
+    "data:complaint-seed": "node scripts/build_complaint_seed.mjs"
   },
   "dependencies": {
     "next": "^15.5.0",

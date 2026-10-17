@@ -18,8 +18,8 @@ The bundled sample is **Zarnab Tiles (Pvt) Ltd, a fictional Pakistani ceramic-ti
 | **Sales & performance** | Trends by month or quarter, contribution to change by region/channel/category, product flags, unusual months, a baseline forecast with backtest | Descriptive + diagnostic analytics, modified z-score, baseline forecasting |
 | **Customers & partners** | Revenue concentration (top-N, Pareto, HHI) and an explainable account-health score with the evidence for every deduction | Descriptive analytics + business rules |
 | **Receivables** | Outstanding and overdue balances reconstructed *as of* any date, aging, overdue by region, accounts whose overdue grew most | As-of reconstruction from payment dates |
-| **Complaints** | Open complaints by team and category, resolution time, product complaint spikes | Descriptive analytics + count-based spike rule |
-| **Ask the analyst** | Plain-English answers that separate facts, possible explanations and recommended next steps, each citing an evidence ledger | Rule-based routing → analytics → LLM explanation → grounding check |
+| **Complaints & triage** | A register of complaint cases: intake form with reference checks and duplicate warnings, AI triage (category, severity vs tone, priority, department, next steps, draft reply, escalation, confidence, missing information), deterministic rules for safety / legal / retention / repeat / systemic cases, human review and approval, status workflow with full history, linked customer / order / invoice records, and management insights (rising categories, concentrations, repeat complainants, risk customers, recurring issues) | Structured LLM output with validation + business rules + human approval; descriptive analytics. See [docs/COMPLAINT_TRIAGE.md](docs/COMPLAINT_TRIAGE.md) |
+| **Ask the analyst** | Plain-English answers that separate facts, possible explanations and recommended next steps, each citing an evidence ledger, including complaint questions (rising categories, unresolved high-priority, retention risk) | Rule-based routing → analytics → LLM explanation → grounding check |
 | **Scenarios** | Collect more overdue, change targets, change costs/discounts, shift product or channel mix | Explicit arithmetic on stated assumptions |
 | **Actions** | Overdue alerts, follow-up tasks, complaint routing, management summary, sent to n8n only after named approval | Rules + optional n8n webhook |
 | **Setup & data sources** | Three-step setup; CSV upload with automatic column matching (business or SAP names), editable and remembered; SAP pipeline, ingest API and drop folder; status, downloads, templates and one-click restore per dataset | Mapping + Zod validation; invalid loads never replace good data |
@@ -54,6 +54,19 @@ flowchart LR
 ```
 
 More detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Complaint triage workflow
+
+```
+Complaint received (form, or an imported complaint opened as a case)
+   └─► AI triage (or labelled rule-based fallback) on redacted text ── suggestion only
+         └─► business rules: safety → Critical, legal / retention / systemic → escalate, never lowered
+               └─► human review: confirm category, priority, department, owner (reason needed below rule minimum)
+                     └─► Under Investigation ⇄ Awaiting Customer ─► Resolved (note; escalations acknowledged) ─► Closed
+                           └─► management insights · management report · AI analyst
+```
+
+The customer's original words are stored unchanged and shown separately from every AI interpretation. The AI cannot close complaints, approve refunds, make commitments or change financial records; approved replies are not sent automatically. Details, evaluation method and results: [docs/COMPLAINT_TRIAGE.md](docs/COMPLAINT_TRIAGE.md).
 
 ## Getting company data in
 
@@ -114,6 +127,9 @@ npm run dev
 | `npm run eval:live` | Same evaluation against the live model (needs `ANTHROPIC_API_KEY`) → `evals/results-live.md` |
 | `npm run data:generate` | Regenerate the synthetic CSVs (seeded, reproducible) |
 | `npm run data:reference` | Recompute the independent pandas reference KPIs used by the tests |
+| `npm run eval:triage` | Complaint-triage evaluation on 36 hand-labelled cases, rule-based (no key) → `evals/results-triage-rules.md` |
+| `npm run eval:triage:live` | Same with the live model (needs `ANTHROPIC_API_KEY`) → `evals/results-triage-live.md` |
+| `npm run data:complaint-seed` | Rebuild the sample complaint texts from the evaluation set |
 
 ## Environment variables
 
@@ -167,7 +183,7 @@ docs/                       Architecture, KPIs, data dictionary, deployment, sec
 
 See [docs/TESTING_AND_EVALUATION.md](docs/TESTING_AND_EVALUATION.md) for the full description, including exactly what was and was not run during development.
 
-In short: 182 tests across 11 suites cover KPI arithmetic on a hand-checkable fixture, filters, receivables aging, concentration, scenarios, CSV validation, health scoring, anomalies, forecasting, complaints, the AI router, evidence packets, the grounding check, the provider client (with a mocked HTTP layer), approval rules, a 14-question evaluation set, ERP export handling (column matching, dates, credit notes, part payments), server storage and ingest, and the SAP pipeline end to end. The core KPIs are cross-checked against an independent pandas implementation, and the SAP route reproduces them exactly from synthetic SAP extracts. Not yet done: real Vitest/`next build` runs (CI does these), a Docker build, and a run on a real SAP system.
+In short: 234 tests across 12 suites cover KPI arithmetic on a hand-checkable fixture, filters, receivables aging, concentration, scenarios, CSV validation, health scoring, anomalies, forecasting, complaints, the AI router, evidence packets, the grounding check, the provider client (with a mocked HTTP layer), approval rules, a 14-question evaluation set, ERP export handling (column matching, dates, credit notes, part payments), server storage and ingest, the SAP pipeline end to end, and the complaint module (output validation, AI failure handling, prompt injection, redaction, business rules, workflow controls, duplicates, linking, server register, analyst integration). The core KPIs are cross-checked against an independent pandas implementation, and the SAP route reproduces them exactly from synthetic SAP extracts. Not yet done: real Vitest/`next build` runs (CI does these), a Docker build, and a run on a real SAP system.
 
 ## Documentation
 
@@ -177,6 +193,7 @@ In short: 182 tests across 11 suites cover KPI arithmetic on a hand-checkable fi
 - [Testing and evaluation](docs/TESTING_AND_EVALUATION.md)
 - [Deployment: company server (Docker) or Vercel](docs/DEPLOYMENT.md)
 - [Connecting SAP](docs/SAP_INTEGRATION.md)
+- [Complaint triage module](docs/COMPLAINT_TRIAGE.md)
 - [Offering it to a manufacturer: pitch and pilot plan](docs/COMPANY_ROLLOUT.md)
 - [Security and privacy](docs/SECURITY.md)
 - [n8n workflow integration](docs/N8N.md)
@@ -188,6 +205,7 @@ In short: 182 tests across 11 suites cover KPI arithmetic on a hand-checkable fi
 
 - **Synthetic data only so far.** Results demonstrate the method, not real market behaviour. No accuracy or business-impact figures are claimed. The SAP pipeline has been tested on synthetic SAP-format extracts, not a live SAP system.
 - **Unapplied cash** (payments on account not matched to an invoice) is not modelled.
+- **Complaint triage is evaluated only on 36 synthetic cases** and only with the rule-based fallback so far; the live model has not been evaluated. Confidence levels are qualitative, not calibrated probabilities. The complaint register is a JSON file per installation (one app instance). See [docs/COMPLAINT_TRIAGE.md](docs/COMPLAINT_TRIAGE.md#10-known-limitations).
 - **Estimated costs.** Gross profit uses estimated standard costs per order line, not audited costs; freight and rebates are excluded.
 - **Targets by region and month only.** Target attainment is hidden when a channel or product filter is active.
 - **Rule-based routing.** The Ask page matches questions to analyses with keyword rules. Unusual phrasings can be misrouted; the page always shows which analyses ran.

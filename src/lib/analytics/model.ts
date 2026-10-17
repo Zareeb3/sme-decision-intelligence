@@ -28,6 +28,16 @@ export interface EnrichedComplaint extends Complaint {
   channel: string;
   product_category: string;
   product_name: string;
+  /** Set when the complaint has a case in the complaint register (see lib/complaints/merge.ts). */
+  caseId?: string;
+  caseStatus?: string;
+  /** Four-level triage priority (confirmed by a person, otherwise the latest suggestion). */
+  priority?: "Low" | "Medium" | "High" | "Critical";
+  priorityConfirmed?: boolean;
+  escalated?: boolean;
+  /** "import": from the complaints dataset; "register": entered in the app. */
+  origin?: "import" | "register";
+  customer_type?: string;
 }
 
 export interface ProductInfo {
@@ -121,6 +131,8 @@ export function buildModel(bundle: DataBundle): Model {
       channel: cust?.channel ?? "Unknown",
       product_category: prod?.product_category ?? "",
       product_name: prod?.product_name ?? c.product_id,
+      origin: "import",
+      customer_type: cust?.customer_type ?? "Unknown",
     };
   });
 

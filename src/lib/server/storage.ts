@@ -6,6 +6,7 @@
  *   datasets/<kind>.prev.csv   previous version, kept for one-step rollback
  *   manifest.json              rows, source and timestamp per dataset
  *   settings.json              company settings
+ *   complaints/cases.json      complaint register (cases, AI assessments, decisions, history)
  *   incoming/                  drop folder: files placed here are imported
  *   processed/, failed/        drop-folder archive
  *
@@ -164,6 +165,32 @@ export class Storage {
     const base = path.basename(name);
     await fs.rename(this.p("incoming", base), this.p(outcome, `${stamp}-${base}`));
     if (log) await fs.writeFile(this.p(outcome, `${stamp}-${base}.log`), log, "utf8");
+  }
+
+  /** Complaint register. Returns [] when none exists yet. */
+  async readCases(): Promise<unknown[]> {
+    try {
+      const v = JSON.parse(await fs.readFile(this.p("complaints", "cases.json"), "utf8")) as { cases?: unknown[] };
+      return Array.isArray(v.cases) ? v.cases : [];
+    } catch {
+      return [];
+    }
+  }
+
+  /** Writes the whole register atomically and keeps the previous file as cases.prev.json. */
+  async saveCases(cases: unknown[]) {
+    await fs.mkdir(this.p("complaints"), { recursive: true });
+    const file = this.p("complaints", "cases.json");
+    try {
+      await fs.copyFile(file, this.p("complaints", "cases.prev.json"));
+    } catch {
+      /* first save */
+    }
+    await this.writeAtomic(file, JSON.stringify({ format: 1, savedAt: new Date().toISOString(), cases }, null, 1));
+  }
+
+  async clearCases() {
+    await fs.rm(this.p("complaints"), { recursive: true, force: true });
   }
 
   get incomingDir() {

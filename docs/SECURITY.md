@@ -15,6 +15,8 @@ What is implemented, what is configurable, and what a company should add before 
 | **Input validation** | Zod schemas for every dataset row, settings, evidence packets, actions and approvals. Upload size limits (50 MB browser, 100 MB ingest); question length 500 characters; packet size 60 KB. |
 | **Output validation** | The model must answer through a fixed JSON schema (forced tool call), revalidated with Zod; every number is checked against the evidence and unverified numbers are flagged to the user. |
 | **Prompt injection** | Data can contain text (e.g. a customer name). The system prompt treats evidence as data; the model has no tools that act on the world; output is structured. |
+| **Complaint text** | Treated as untrusted input: delimited in the prompt, tags stripped, instructions inside it detected and flagged, structured output only. Names, phone numbers, e-mail addresses, ID, card and bank numbers are removed in the browser and again on the server before triage; amounts, invoices and balances are never sent. Draft replies containing commitments (refunds, replacements, compensation, dates) are replaced and flagged. |
+| **Complaint decisions** | The AI only adds suggestions. Confirming triage, changing status, approving replies and acknowledging escalations require a named person and are enforced by shared workflow code on the server and in the browser; every change is appended to the case history; stale updates are rejected (version check). Safety, legal and retention cases cannot be rated below the rule minimum without a written reason. |
 | **Human approval** | `/api/actions` refuses requests without `approved: true` and a named approver; the UI requires reviewing the payload. The n8n destination comes only from server configuration (no SSRF). |
 | **Headers** | `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `X-Frame-Options: DENY`; `X-Powered-By` removed. |
 | **Honest labelling** | Sample data, demo mode, provider failures and unverified numbers are always shown as such. |
@@ -26,4 +28,5 @@ What is implemented, what is configurable, and what a company should add before 
 - **Server-side evidence.** The server trusts the evidence packet computed in the browser. With server-held data, the server could build it itself.
 - **Content Security Policy.** Not configured yet.
 - **AI provider terms.** Review the provider's data-retention and training terms with the company's legal/IT team before enabling live mode, even with name replacement on.
+- **Authenticated identities for complaint decisions.** "Acting as" is a typed name; with SSO the name should come from the login.
 - **Penetration test.** Not performed. No claim of production-grade security is made.

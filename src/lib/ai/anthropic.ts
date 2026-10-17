@@ -36,11 +36,22 @@ interface ToolUseBlock {
   input: unknown;
 }
 
-export async function explainWithClaude(
-  packet: EvidencePacket,
+export interface ToolDefinition {
+  name: string;
+  description: string;
+  input_schema: Record<string, unknown>;
+}
+
+/**
+ * One Messages API call that forces the model to answer through `tool`
+ * (structured output). Returns the tool input, unvalidated; callers validate it.
+ * Timeouts, network errors, HTTP errors and missing tool output become LlmError.
+ */
+export async function callTool(
+  req: { system: string; tool: ToolDefinition; user: string; maxTokens: number },
   cfg: LlmConfig,
   fetchImpl: typeof fetch = fetch,
-): Promise<{ response: AnalystResponse; usage?: { input_tokens: number; output_tokens: number } }> {
+): Promise<{ input: unknown; usage?: { input_tokens: number; output_tokens: number } }> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), cfg.timeoutMs);
   let res: Response;
@@ -55,12 +66,12 @@ export async function explainWithClaude(
       },
       body: JSON.stringify({
         model: cfg.model,
-        max_tokens: 2000,
+        max_tokens: req.maxTokens,
         temperature: 0,
-        system: SYSTEM_PROMPT,
-        tools: [SUBMIT_TOOL],
-        tool_choice: { type: "tool", name: SUBMIT_TOOL.name },
-        messages: [{ role: "user", content: buildUserMessage(packet) }],
+        system: req.system,
+        tools: [req.tool],
+        tool_choice: { type: "tool", name: req.tool.name },
+        messages: [{ role: "user", content: req.user }],
       }),
     });
   } catch (e) {
@@ -71,16 +82,30 @@ export async function explainWithClaude(
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    const hint = res.status === 401 ? " Check ANTHROPIC_API_KEY." : res.status === 404 ? " Check ANTHROPIC_MODEL." : res.status === 429 ? " Rate limit reached; try again shortly." : "";
+    const hint = res.status === 401 ? " Check ANTHROPIC_API_KEY." : res.status === 404 ? " Check ANTHROPIC_MODEL." : res.status === 429 ? " Rate limit reached; try again shortly." : res.status === 529 || res.status >= 500 ? " The provider is busy or unavailable; try again shortly." : "";
     throw new LlmError(`AI provider returned HTTP ${res.status}.${hint} ${body.slice(0, 200)}`.trim(), res.status);
   }
 
-  const json = (await res.json()) as { content?: unknown[]; usage?: { input_tokens: number; output_tokens: number } };
-  const block = (json.content ?? []).find((b): b is ToolUseBlock => (b as ToolUseBlock)?.type === "tool_use" && (b as ToolUseBlock).name === SUBMIT_TOOL.name);
-  if (!block) throw new LlmError("The AI response did not contain a structured analysis.");
-  const parsed = analystResponseSchema.safeParse(block.input);
+  let json: { content?: unknown[]; usage?: { input_tokens: number; output_tokens: number } };
+  try {
+    json = (await res.json()) as typeof json;
+  } catch {
+    throw new LlmError("The AI provider returned a response that is not valid JSON.");
+  }
+  const block = (json.content ?? []).find((b): b is ToolUseBlock => (b as ToolUseBlock)?.type === "tool_use" && (b as ToolUseBlock).name === req.tool.name);
+  if (!block) throw new LlmError("The AI response did not contain the expected structured output.");
+  return { input: block.input, usage: json.usage };
+}
+
+export async function explainWithClaude(
+  packet: EvidencePacket,
+  cfg: LlmConfig,
+  fetchImpl: typeof fetch = fetch,
+): Promise<{ response: AnalystResponse; usage?: { input_tokens: number; output_tokens: number } }> {
+  const { input, usage } = await callTool({ system: SYSTEM_PROMPT, tool: SUBMIT_TOOL as ToolDefinition, user: buildUserMessage(packet), maxTokens: 2000 }, cfg, fetchImpl);
+  const parsed = analystResponseSchema.safeParse(input);
   if (!parsed.success) {
     throw new LlmError(`The AI response did not match the expected structure: ${parsed.error.issues.slice(0, 3).map((i) => `${i.path.join(".")} ${i.message}`).join("; ")}`);
   }
-  return { response: parsed.data, usage: json.usage };
+  return { response: parsed.data, usage };
 }

@@ -27,11 +27,13 @@ docker compose up -d --build
 
 Open `http://<server>:3000`, sign in, and follow **Set up your company**. Put HTTPS in front (the company's reverse proxy, IIS ARR, nginx or Caddy): Basic authentication and the ingest token must only travel over HTTPS.
 
-**Data and backups.** Everything the app stores is in the `app-data` volume (`/data` in the container): `datasets/*.csv` (current and previous version of each dataset), `manifest.json` (who loaded what, when), `settings.json`, and the drop folder (`incoming/`, `processed/`, `failed/`). Back up the volume with the server's normal backup. To use a shared folder that SAP jobs write into as the drop folder, uncomment the bind mount in `docker-compose.yml`.
+**Data and backups.** Everything the app stores is in the `app-data` volume (`/data` in the container): `datasets/*.csv` (current and previous version of each dataset), `manifest.json` (who loaded what, when), `settings.json`, `complaints/cases.json` (the complaint register with its full history), and the drop folder (`incoming/`, `processed/`, `failed/`). Back up the volume with the server's normal backup. To use a shared folder that SAP jobs write into as the drop folder, uncomment the bind mount in `docker-compose.yml`.
 
 **Sizing.** Analytics run in the browser on the loaded datasets. Tested comfortably with the sample (8,000 sales lines, 8,000 invoices). For a manufacturer with a few hundred thousand billing lines over three years, expect initial loads of a few seconds on a normal laptop; beyond roughly a million lines, load a shorter history or aggregate lines per invoice before loading. This has not been benchmarked on real company volumes yet; measure during the pilot.
 
 **Without Docker.** `npm install && npm run build && DATA_DIR=/srv/di-data npm start` behind any process manager (pm2, systemd, Windows service). Node.js 20.9+.
+
+**One instance per data folder.** The complaint register is a JSON file with changes serialised inside the app process; run a single app container per `DATA_DIR` (the compose file does).
 
 **Updating.** `git pull && docker compose up -d --build`. Data in the volume is kept.
 

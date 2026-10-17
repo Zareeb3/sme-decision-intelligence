@@ -33,10 +33,19 @@ const RULE_FIELDS: { group: Group; key: string; label: string; unit: string }[] 
   { group: "complaints", key: "spikeWindowDays", label: "Complaint spike: look-back window", unit: "days" },
   { group: "complaints", key: "spikeMinCount", label: "Complaint spike: at least", unit: "complaints" },
   { group: "complaints", key: "spikeMinRatio", label: "Complaint spike: times the normal rate", unit: "×" },
+  { group: "complaints", key: "highClaimValue", label: "Triage: claim at least (High priority)", unit: "amount" },
+  { group: "complaints", key: "repeatMinCount", label: "Triage: repeat customer after", unit: "complaints" },
+  { group: "complaints", key: "repeatWindowDays", label: "Triage: repeat window", unit: "days" },
+  { group: "complaints", key: "systemicMinCount", label: "Triage: possible systemic issue at", unit: "complaints" },
+  { group: "complaints", key: "systemicWindowDays", label: "Triage: systemic window", unit: "days" },
+  { group: "complaints", key: "slaCriticalHours", label: "First response target: Critical", unit: "hours" },
+  { group: "complaints", key: "slaHighHours", label: "First response target: High", unit: "hours" },
+  { group: "complaints", key: "slaMediumHours", label: "First response target: Medium", unit: "hours" },
+  { group: "complaints", key: "slaLowHours", label: "First response target: Low", unit: "hours" },
   { group: "actions", key: "overdueAlertThreshold", label: "Overdue alert above", unit: "amount" },
 ];
 
-const GROUP_TITLES: Record<Group, string> = { health: "Account health score", products: "Product flags", complaints: "Complaint spikes", actions: "Actions" };
+const GROUP_TITLES: Record<Group, string> = { health: "Account health score", products: "Product flags", complaints: "Complaints and triage", actions: "Actions" };
 
 function Integration({ label, ok, okText, offText }: { label: string; ok: boolean; okText: string; offText: string }) {
   return (

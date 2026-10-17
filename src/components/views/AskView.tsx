@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useReadyData } from "../DataProvider";
+import { useData, useReadyData } from "../DataProvider";
 import { Badge, Button, Notice, PageHeader } from "../ui";
 import { routeQuestion, type RouteResult } from "@/lib/ai/router";
 import { buildEvidence } from "@/lib/ai/evidence";
@@ -17,7 +17,9 @@ const suggestions = (partner: string) => [
   "Which accounts have significant overdue invoices?",
   "What could happen if collections improve by 10%?",
   "Which products show weak margins or unusual patterns?",
-  "Which complaints require management attention?",
+  "Which complaints require immediate management attention?",
+  "Which complaint categories are increasing?",
+  "Which complaints may threaten customer retention?",
   "Which customers contribute the largest share of revenue?",
   "What should a business manager investigate next?",
 ];
@@ -240,6 +242,7 @@ function Answer({ turn, onAsk }: { turn: Turn; onAsk: (q: string) => void }) {
 
 export function AskView() {
   const ready = useReadyData();
+  const { cases, registerNow } = useData();
   const [turns, setTurns] = useState<Turn[]>([]);
   const [question, setQuestion] = useState("");
   const [status, setStatus] = useState<Status | null>(null);
@@ -262,7 +265,7 @@ export function AskView() {
     if (!text) return;
     const route = routeQuestion(text, model);
     const f = { ...filters, ...route.filterOverrides };
-    const packet = buildEvidence(model, f, text.slice(0, 500), route.analyses, { scenarioPct: route.scenarioPct });
+    const packet = buildEvidence(model, f, text.slice(0, 500), route.analyses, { scenarioPct: route.scenarioPct, cases, now: registerNow() });
     // privacy option: customer names never leave the browser; aliases are swapped back in the answer
     const anon = settings.anonymiseForAI ? anonymisePacket(packet, model.bundle.customers.map((c) => c.customer_name)) : { packet, aliases: new Map<string, string>() };
     const outbound = anon.packet;

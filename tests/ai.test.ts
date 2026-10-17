@@ -142,7 +142,7 @@ describe("demo mode and live-mode fallbacks", () => {
   });
 
   it("produces a grounded demo answer for every analysis type", () => {
-    const all = ["sales_vs_collections", "performance_drivers", "customer_concentration", "receivables_risk", "distributor_attention", "product_performance", "collection_scenario", "complaints", "forecast", "data_quality", "next_steps"] as const;
+    const all = ["sales_vs_collections", "performance_drivers", "customer_concentration", "receivables_risk", "distributor_attention", "product_performance", "collection_scenario", "complaints", "complaint_patterns", "complaint_priorities", "forecast", "data_quality", "next_steps"] as const;
     for (const a of all) {
       const p = buildEvidence(model, base, `test ${a}`, [a]);
       const r = demoExplain(p);

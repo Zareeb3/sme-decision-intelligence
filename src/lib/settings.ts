@@ -30,6 +30,19 @@ export const businessRulesSchema = z.object({
     spikeWindowDays: z.number().min(7).max(365),
     spikeMinCount: z.number().min(1),
     spikeMinRatio: z.number().min(1),
+    /** Complaint triage: a claim at or above this amount is at least High priority. */
+    highClaimValue: z.number().min(0),
+    /** Repeat complaints: this many complaints from one customer within the window. */
+    repeatWindowDays: z.number().min(7).max(365),
+    repeatMinCount: z.number().int().min(2),
+    /** Possible systemic issue: this many complaints on one product and category within the window. */
+    systemicWindowDays: z.number().min(7).max(365),
+    systemicMinCount: z.number().int().min(2),
+    /** Target first-response times by priority, in hours. */
+    slaCriticalHours: z.number().min(1),
+    slaHighHours: z.number().min(1),
+    slaMediumHours: z.number().min(1),
+    slaLowHours: z.number().min(1),
   }),
   actions: z.object({
     overdueAlertThreshold: z.number().min(0),
@@ -51,7 +64,20 @@ export const DEFAULT_RULES: BusinessRules = {
     watchFrom: 60,
   },
   products: { salesDropPct: 15, weakMarginGapPts: 5, marginErosionPts: 3 },
-  complaints: { spikeWindowDays: 60, spikeMinCount: 3, spikeMinRatio: 3 },
+  complaints: {
+    spikeWindowDays: 60,
+    spikeMinCount: 3,
+    spikeMinRatio: 3,
+    highClaimValue: 250_000,
+    repeatWindowDays: 90,
+    repeatMinCount: 2,
+    systemicWindowDays: 90,
+    systemicMinCount: 3,
+    slaCriticalHours: 24,
+    slaHighHours: 48,
+    slaMediumHours: 120,
+    slaLowHours: 240,
+  },
   actions: { overdueAlertThreshold: 10_000_000 },
 };
 

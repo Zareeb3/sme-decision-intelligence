@@ -59,6 +59,26 @@ const RULES: Rule[] = [
     patterns: [/\bwhat (could|would|will|if)\b/i, /\bscenario\b/i, /\bimprove[sd]?\b[\s\S]*\bby\s+\d+/i, /\bif\b[\s\S]*\b\d+\s?%/i],
   },
   {
+    id: "complaint_patterns",
+    patterns: [
+      /\bcomplain\w*\b[\s\S]*\b(increas\w*|rising|rise|grow\w*|trend\w*|concentrat\w*|repeat\w*|recurr\w*|pattern\w*|segment\w*)\b/i,
+      /\b(increas\w*|rising|growing)\b[\s\S]*\bcomplain\w*/i,
+      /\b(repeat\w*|recurring|repeated)\s+(complaints?|issues?|problems?)\b/i,
+      /\boperational (issues?|problems?)\b/i,
+    ],
+  },
+  {
+    id: "complaint_priorities",
+    patterns: [
+      /\b(unresolved|open)\b[\s\S]*\b(high[- ]priority|critical|complaints?)\b/i,
+      /\bcomplaints?\b[\s\S]*\b(attention|urgent|immediate|escalat\w*|priorit\w*)\b/i,
+      /\b(immediate|management) attention\b[\s\S]*\bcomplaints?\b/i,
+      /\b(retention|churn)\b/i,
+      /\b(threaten\w*|lose|losing)\b[\s\S]*\bcustomers?\b/i,
+      /\bdepartments?\b[\s\S]*\bpriorit\w*/i,
+    ],
+  },
+  {
     id: "complaints",
     patterns: [/\bcomplain\w*/i, /\bquality\b/i, /\boperational\b/i, /\bissues?\b/i, /\bshade\b/i, /\bbreakage\b/i, /\bclaims?\b/i],
   },
@@ -97,6 +117,8 @@ const PRIORITY: AnalysisId[] = [
   "customer_concentration",
   "distributor_attention",
   "receivables_risk",
+  "complaint_priorities",
+  "complaint_patterns",
   "complaints",
   "forecast",
   "product_performance",
@@ -115,6 +137,8 @@ export function routeQuestion(question: string, model?: Model): RouteResult {
 
   // A "sales vs collections" question already covers drivers and receivables movement.
   if (ids.includes("sales_vs_collections")) ids = ids.filter((i) => i !== "performance_drivers");
+  // "Which complaints may threaten retention" is about complaints, not the account health score.
+  if (ids.includes("complaint_priorities") && !/distributor|health|account/i.test(question)) ids = ids.filter((i) => i !== "distributor_attention");
   // Scenario questions about something other than collections fall back to the scenario page.
   if (ids.includes("collection_scenario") && !/collect|overdue|receivabl|payment|recover/i.test(question)) {
     ids = ids.filter((i) => i !== "collection_scenario");

@@ -80,7 +80,8 @@ export function complaintSummary(model: Model, f: Filters, rules: BusinessRules[
     })
     .sort((a, b) => b.open - a.open);
 
-  const prodGroups = group([...inPeriod, ...open], (c) => c.product_id);
+  // Complaints without an identified product (possible for complaints entered in the app) are not grouped by product.
+  const prodGroups = group([...inPeriod, ...open].filter((c) => c.product_id), (c) => c.product_id);
   const byProduct = [...prodGroups.entries()]
     .map(([k, rows]) => ({
       key: k,
@@ -95,7 +96,7 @@ export function complaintSummary(model: Model, f: Filters, rules: BusinessRules[
   const recentStart = addDays(asOf, -(W - 1));
   const baseStart = addDays(recentStart, -365);
   const spikes: ComplaintSpike[] = [];
-  const byProd = group(allDims, (c) => c.product_id);
+  const byProd = group(allDims.filter((c) => c.product_id), (c) => c.product_id);
   for (const [pid, rows] of byProd) {
     const recent = rows.filter((c) => inRange(c.date_opened, recentStart, asOf));
     const base = rows.filter((c) => c.date_opened >= baseStart && c.date_opened < recentStart);

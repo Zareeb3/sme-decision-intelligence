@@ -37,5 +37,6 @@ export async function DELETE() {
   const storage = Storage.fromEnv();
   if (!storage) return NextResponse.json({ ok: false, message: "Server storage is not enabled on this deployment." }, { status: 400 });
   await storage.clearAll();
-  return NextResponse.json({ ok: true, message: "All stored company datasets were removed." });
+  await storage.clearCases();
+  return NextResponse.json({ ok: true, message: "All stored company datasets and the complaint register were removed." });
 }
